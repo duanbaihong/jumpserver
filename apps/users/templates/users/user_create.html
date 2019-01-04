@@ -1,0 +1,16 @@
+{% extends 'users/_user.html' %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% block user_template_title %}{% trans "Create user" %}{% endblock %}
+{#{% block username %}#}
+{#    {% bootstrap_field form.username layout="horizontal" %}#}
+{#{% endblock %}#}
+{% block password %}
+    <div class="form-group">
+        <label class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label">{% trans 'Password' %}</label>
+        <div class="col-bg-8 col-md-7 col-sm-7 col-xs-8 controls" style="margin-top: 8px;">
+            {% trans 'Reset link will be generated and sent to the user. ' %}
+        </div>
+    </div>
+{% endblock %}
+

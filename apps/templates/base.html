@@ -1,0 +1,57 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="renderer" content="webkit">
+    <title>Jumpserver</title>
+    <link rel="shortcut icon" href="{% static 'img/facio.ico' %}" type="image/x-icon">
+    {% include '_head_css_js.html' %}
+    <link href="{% static 'css/jumpserver.css' %}" rel="stylesheet">
+    {% block custom_head_css_js %} {% endblock %}
+    <script type="text/javascript">
+        //定义日志选择的多语言支持locale
+        var datatime_picker_locale = {
+            "format": 'YYYY-MM-DD HH:mm',
+            "separator": " -222 ",
+            "applyLabel": "{% trans 'Apply' %}",
+            "cancelLabel": "{% trans 'Cancel' %}",
+            "fromLabel": "{% trans 'Begin time' %}",
+            "toLabel": "{% trans 'End time' %}",
+            "customRangeLabel": "{% trans 'Custom range' %}",
+            "weekLabel": "{% trans 'Week' %}",
+            "daysOfWeek": ["{% trans 'Sun' %}", "{% trans 'Mon' %}", "{% trans 'Tue' %}", "{% trans 'Wed' %}", "{% trans 'Thu' %}", "{% trans 'Fri' %}", "{% trans 'Sat' %}"],
+            "monthNames": ["{% trans 'January' %}", "{% trans 'February' %}", "{% trans 'March' %}", "{% trans 'April' %}", "{% trans 'May' %}", "{% trans 'June' %}", "{% trans 'July' %}", "{% trans 'August' %}", "{% trans 'September' %}", "{% trans 'October' %}", "{% trans 'November' %}", "{% trans 'December' %}"],
+            "firstDay": 1
+        }; 
+        datepicker_date_format = {
+            days: ["{% trans 'Sunday' %}", "{% trans 'Monday' %}", "{% trans 'Tuesday' %}", "{% trans 'Wednesday' %}", "{% trans 'Thursday' %}", "{% trans 'Friday' %}", "{% trans 'Saturday' %}", "{% trans 'Sunday' %}"],
+            daysShort: ["{% trans 'Sun' %}", "{% trans 'Mon' %}", "{% trans 'Tue' %}", "{% trans 'Wed' %}", "{% trans 'Thu' %}", "{% trans 'Fri' %}", "{% trans 'Sat' %}", "{% trans 'Sun' %}"],
+            daysMin: ["{% trans 'Sun' %}", "{% trans 'Mon' %}", "{% trans 'Tue' %}", "{% trans 'Wed' %}", "{% trans 'Thu' %}", "{% trans 'Fri' %}", "{% trans 'Sat' %}", "{% trans 'Sun' %}"],
+            months: ["{% trans 'January' %}", "{% trans 'February' %}", "{% trans 'March' %}", "{% trans 'April' %}", "{% trans 'May' %}", "{% trans 'June' %}", "{% trans 'July' %}", "{% trans 'August' %}", "{% trans 'September' %}", "{% trans 'October' %}", "{% trans 'November' %}", "{% trans 'December' %}"],
+            monthsShort: ["{% trans 'Jan' %}", "{% trans 'Feb' %}", "{% trans 'Mar' %}", "{% trans 'Apr' %}", "{% trans 'May' %}", "{% trans 'Jun' %}", "{% trans 'Jul' %}", "{% trans 'Aug' %}", "{% trans 'Sec' %}", "{% trans 'Oct' %}", "{% trans 'Nov' %}", "{% trans 'Dec' %}"],
+            today: "{% trans 'Today' %}"
+        };
+        $(document).ready(function() {
+            if($.fn.hasOwnProperty('datepicker')) {
+                $.fn.datepicker.dates['en']=datepicker_date_format
+            }
+        })
+    </script>
+</head>
+
+<body>
+<div id="wrapper">
+    {% include '_left_side_bar.html' %}
+    <div id="page-wrapper" class="gray-bg">
+        {% include '_header_bar.html' %}
+        {% block content %}{% endblock %}
+        {% include '_footer.html' %}
+    </div>
+</div>
+
+</body>
+{% include '_foot_js.html' %}
+{% block custom_foot_js %} {% endblock %}
+</html>
