@@ -1581,9 +1581,9 @@ table.dataTable thead .sorting_asc_disabled,
 table.dataTable thead .sorting_desc_disabled {
   background: transparent;
 }
-.dataTables_wrapper {
+/*.dataTables_wrapper {
   padding-bottom: 30px;
-}
+}*/
 /*.dataTables_length {*/
   /*float: left;*/
 /*}*/
