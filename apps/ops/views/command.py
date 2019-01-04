@@ -8,14 +8,14 @@ from django.views.generic import ListView, TemplateView
 from common.mixins import DatetimeSearchMixin
 from ..models import CommandExecution
 from ..forms import CommandExecutionForm
-
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 __all__ = [
     'CommandExecutionListView', 'CommandExecutionStartView'
 ]
 
 
-class CommandExecutionListView(DatetimeSearchMixin, ListView):
+class CommandExecutionListView(LoginRequiredMixin,DatetimeSearchMixin, ListView):
     template_name = 'ops/command_execution_list.html'
     model = CommandExecution
     paginate_by = settings.DISPLAY_PER_PAGE
@@ -50,7 +50,7 @@ class CommandExecutionListView(DatetimeSearchMixin, ListView):
         return super().get_context_data(**kwargs)
 
 
-class CommandExecutionStartView(TemplateView):
+class CommandExecutionStartView(LoginRequiredMixin,TemplateView):
     template_name = 'ops/command_execution_create.html'
     form_class = CommandExecutionForm
 
