@@ -426,7 +426,8 @@ div.dataTables_wrapper div.dataTables_filter {
 .tree-toggle-btn {
     width: 12px;
     text-align: center;
-    padding: 5px 0;
+    padding: 10px 0;
+    border-radius: 12px;
 }
 
 .profile-dropdown li a {

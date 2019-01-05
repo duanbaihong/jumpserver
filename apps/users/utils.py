@@ -23,7 +23,7 @@ from common.utils import reverse, get_object_or_none
 from common.forms import SecuritySettingForm
 from common.models import Setting
 from .models import User, LoginLog
-
+from authentication.ldap.backends import LDAPAuthorizationBackend
 
 logger = logging.getLogger('jumpserver')
 
@@ -184,8 +184,14 @@ def check_user_valid(**kwargs):
         user = None
 
     if user is None:
-        return None, _('User not exist')
-    elif not user.is_valid:
+        if password and username and settings.AUTH_LDAP:
+            user=LDAPAuthorizationBackend().authenticate(username=username,password=password)
+            logger.info('首次登陆去LDAP拉用户信息，首次登陆只支持密码认证！')
+            if user is None:
+                return None, _('User not exist')
+            return user, ''
+
+    if not user or not user.is_valid:
         return None, _('Disabled or expired')
 
     if password and authenticate(username=username, password=password):
