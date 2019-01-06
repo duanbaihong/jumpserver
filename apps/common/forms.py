@@ -110,6 +110,7 @@ class LDAPTestforUsername(BaseForm):
     )
         
 class LDAPSettingForm(BaseForm):
+    AUTH_LDAP = forms.BooleanField(label=_("Enable LDAP auth"), required=False)
     AUTH_LDAP_SERVER_URI = forms.CharField(
         label=_("LDAP server"),
         widget=forms.TextInput(attrs={'placeholder': 'ldap://[ip]:389|ip'}),
@@ -170,7 +171,6 @@ class LDAPSettingForm(BaseForm):
     AUTH_LDAP_START_TLS = forms.BooleanField(
         label=_("Use SSL"), required=False
     )
-    AUTH_LDAP = forms.BooleanField(label=_("Enable LDAP auth"), required=False)
 
 
 class TerminalSettingForm(BaseForm):
