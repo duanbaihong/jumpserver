@@ -138,7 +138,18 @@ class LDAPSettingForm(BaseForm):
         widget=forms.TextInput(attrs={'placeholder': 'ou=xxxx,dc=xxxx,dc=com'}),
         help_text=_("Group search base OU")
     )
-
+    GROUP_TYPE_STRING_CHOICES=(
+            ('PosixGroupType','PosixGroupType'),
+            ('GroupOfNamesType','GroupOfNamesType'),
+            ('GroupOfUniqueNamesType','GroupOfUniqueNamesType'),
+            ('OrganizationalRoleGroupType','OrganizationalRoleGroupType'),
+            ('NestedGroupOfNamesType','NestedGroupOfNamesType'),
+            ('NestedGroupOfUniqueNamesType','NestedGroupOfUniqueNamesType'),
+            ('NestedOrganizationalRoleGroupType','NestedOrganizationalRoleGroupType'),
+                               )
+    AUTH_LDAP_GROUP_TYPE_STRING= forms.ChoiceField(
+        choices=GROUP_TYPE_STRING_CHOICES, label=_("LDAP Group Type")
+    )
     AUTH_LDAP_GROUP_SEARCH_FILTER = forms.CharField(
         label=_("Group search filter"),
         widget=forms.TextInput(attrs={'placeholder': '(& (cn=%(user)s) (| (objectclass=groupOfNames) (objectclass=groupOfUniqueNames) (objectclass=posixGroup)))'}),

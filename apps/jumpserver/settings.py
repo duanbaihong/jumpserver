@@ -14,7 +14,7 @@ import os
 import sys
 
 import ldap
-from django_auth_ldap.config import LDAPSearch, LDAPSearchUnion, GroupOfUniqueNamesType
+from django_auth_ldap.config import LDAPSearch, LDAPSearchUnion
 from django.urls import reverse_lazy
 
 from .conf import load_user_config
@@ -377,7 +377,8 @@ AUTH_LDAP_CONNECTION_OPTIONS = {
     ldap.OPT_TIMEOUT: 5
 }
 AUTH_LDAP_MIRROR_GROUPS = True
-AUTH_LDAP_GROUP_TYPE = GroupOfUniqueNamesType(name_attr="cn")
+AUTH_LDAP_GROUP_TYPE_STRING = ''
+# AUTH_LDAP_GROUP_TYPE = GroupOfUniqueNamesType(name_attr="cn")
 # AUTH_LDAP_GROUP_SEARCH_OU = CONFIG.AUTH_LDAP_GROUP_SEARCH_OU
 # AUTH_LDAP_GROUP_SEARCH_FILTER = CONFIG.AUTH_LDAP_GROUP_SEARCH_FILTER
 AUTH_LDAP_CONNECTION_OPTIONS = {

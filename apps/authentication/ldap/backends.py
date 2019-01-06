@@ -5,7 +5,7 @@ import ldap
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from django_auth_ldap.backend import _LDAPUser, LDAPBackend
-from django_auth_ldap.config import _LDAPConfig, LDAPSearch, LDAPSearchUnion
+from django_auth_ldap.config import _LDAPConfig, LDAPSearch, LDAPSearchUnion,PosixGroupType, GroupOfNamesType, GroupOfUniqueNamesType, OrganizationalRoleGroupType, NestedGroupOfNamesType, NestedGroupOfUniqueNamesType, NestedOrganizationalRoleGroupType
 from users.models import UserGroup
 from common.utils import get_signer, validate_ssh_public_key
 logger = _LDAPConfig.get_logger()
@@ -15,6 +15,16 @@ class LDAPAuthorizationBackend(LDAPBackend):
     """
     Override this class to override _LDAPUser to LDAPUser
     """
+    def __init__(self):
+        # 用数据信息保存GROUP_TYPE 信息
+        if not self.settings.GROUP_TYPE and hasattr(settings,'AUTH_LDAP_GROUP_TYPE_STRING'):
+            self.settings.GROUP_TYPE = globals().get(settings.AUTH_LDAP_GROUP_TYPE_STRING)(name_attr='cn')
+
+        # 用数据信息保存GROUP_SEARCH 信息
+        self.settings.GROUP_SEARCH = LDAPSearch(
+            settings.AUTH_LDAP_GROUP_SEARCH_OU, ldap.SCOPE_SUBTREE, settings.AUTH_LDAP_GROUP_SEARCH_FILTER
+          )
+
 
     def authenticate(self, request=None, username=None, password=None, **kwargs):
         if password or self.settings.PERMIT_EMPTY_PASSWORD:
@@ -63,11 +73,6 @@ class LDAPUser(_LDAPUser):
         configuration in the settings.py file
         is configured with a `lambda` problem value
         """
-        # 用数据信息保存GROUP_SEARCH 信息
-        self.settings.GROUP_SEARCH = LDAPSearch(
-            settings.AUTH_LDAP_GROUP_SEARCH_OU, ldap.SCOPE_SUBTREE, settings.AUTH_LDAP_GROUP_SEARCH_FILTER
-          )
-
         user_search_union = [
             LDAPSearch(
                 USER_SEARCH, ldap.SCOPE_SUBTREE,
