@@ -230,7 +230,7 @@ class UserPublicKeyForm(forms.Form):
         else:
             self.instance = None    
         super().__init__(*args, **kwargs)
-        if hasattr(self.instance,'public_key'):
+        if hasattr(self.instance,'public_key') and self.instance.public_key:
             self.fields['public_key'].initial=self.instance.public_key
 
     def clean_public_key(self):
