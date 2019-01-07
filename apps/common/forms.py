@@ -133,6 +133,18 @@ class LDAPSettingForm(BaseForm):
         widget=forms.TextInput(attrs={'placeholder': '(uid=%(user)s)'}),
         help_text=_("Choice may be (cn|uid|sAMAccountName)=%(user)s)")
     )
+
+    AUTH_LDAP_USER_ATTR_MAP = FormDictField(
+        label=_("User attr map"),
+        widget=forms.Textarea(attrs={
+            'placeholder': '{"username": "uid", "name": "sn", "email": "mail", "role": "businessCategory", "phone": "mobile", "_public_key": "sshPublickey"}',
+            'style':'resize:none'}),
+        help_text=_(
+            "User attr map present how to map LDAP user attr to jumpserver, "
+            "username,name,email is jumpserver attr"
+        ),
+    )
+
     AUTH_LDAP_GROUP_SEARCH_OU = forms.CharField(
         label=_("Group OU"),
         widget=forms.TextInput(attrs={'placeholder': 'ou=xxxx,dc=xxxx,dc=com'}),
@@ -142,29 +154,31 @@ class LDAPSettingForm(BaseForm):
             ('PosixGroupType','PosixGroupType'),
             ('GroupOfNamesType','GroupOfNamesType'),
             ('GroupOfUniqueNamesType','GroupOfUniqueNamesType'),
+            ('ActiveDirectoryGroupType','ActiveDirectoryGroupType'),
             ('OrganizationalRoleGroupType','OrganizationalRoleGroupType'),
             ('NestedGroupOfNamesType','NestedGroupOfNamesType'),
             ('NestedGroupOfUniqueNamesType','NestedGroupOfUniqueNamesType'),
+            ('NestedActiveDirectoryGroupType','NestedActiveDirectoryGroupType'),
             ('NestedOrganizationalRoleGroupType','NestedOrganizationalRoleGroupType'),
                                )
     AUTH_LDAP_GROUP_TYPE_STRING= forms.ChoiceField(
-        choices=GROUP_TYPE_STRING_CHOICES, label=_("LDAP Group Type")
+        label=_("LDAP Group Type"),
+        choices=GROUP_TYPE_STRING_CHOICES,
+        widget=forms.Select(attrs={'class':'form-control'}),
+        help_text=_("LDAP group type selection,default attr is 'cn'.Configuration parameters: AUTH_LDAP_GROUP_TYPE_STRING='cn'")
     )
+
+    AUTH_LDAP_GROUP_TYPE_STRING_ATTR = forms.CharField(
+        initial='cn',
+        widget=forms.TextInput(attrs={'placeholder': 'name_attr="cn"','class':'form-control','style':'width:140px'}),
+    )
+
     AUTH_LDAP_GROUP_SEARCH_FILTER = forms.CharField(
         label=_("Group search filter"),
         widget=forms.TextInput(attrs={'placeholder': '(& (cn=%(user)s) (| (objectclass=groupOfNames) (objectclass=groupOfUniqueNames) (objectclass=posixGroup)))'}),
         required=False,
         help_text=_("Group filter condition.Example:(& (cn=%(user)s) (| (objectclass=groupOfNames) (objectclass=groupOfUniqueNames) (objectclass=posixGroup)))"
             )
-    )
-
-    AUTH_LDAP_USER_ATTR_MAP = FormDictField(
-        label=_("User attr map"),
-        widget=forms.Textarea(attrs={'placeholder': '{"username": "uid", "name": "sn", "email": "mail", "role": "businessCategory", "phone": "mobile", "_public_key": "sshPublickey"}'}),
-        help_text=_(
-            "User attr map present how to map LDAP user attr to jumpserver, "
-            "username,name,email is jumpserver attr"
-        ),
     )
     # AUTH_LDAP_GROUP_SEARCH_OU = CONFIG.AUTH_LDAP_GROUP_SEARCH_OU
     # AUTH_LDAP_GROUP_SEARCH_FILTER = CONFIG.AUTH_LDAP_GROUP_SEARCH_FILTER

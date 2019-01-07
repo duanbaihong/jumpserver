@@ -5,7 +5,7 @@ import ldap
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from django_auth_ldap.backend import _LDAPUser, LDAPBackend
-from django_auth_ldap.config import _LDAPConfig, LDAPSearch, LDAPSearchUnion,PosixGroupType, GroupOfNamesType, GroupOfUniqueNamesType, OrganizationalRoleGroupType, NestedGroupOfNamesType, NestedGroupOfUniqueNamesType, NestedOrganizationalRoleGroupType
+from django_auth_ldap.config import _LDAPConfig, LDAPSearch, LDAPSearchUnion, PosixGroupType, GroupOfNamesType, GroupOfUniqueNamesType, OrganizationalRoleGroupType, NestedGroupOfNamesType, NestedGroupOfUniqueNamesType, NestedOrganizationalRoleGroupType
 from users.models import UserGroup
 from common.utils import get_signer, validate_ssh_public_key
 logger = _LDAPConfig.get_logger()
@@ -17,8 +17,8 @@ class LDAPAuthorizationBackend(LDAPBackend):
     """
     def __init__(self):
         # 用数据信息保存GROUP_TYPE 信息
-        if not self.settings.GROUP_TYPE and hasattr(settings,'AUTH_LDAP_GROUP_TYPE_STRING'):
-            self.settings.GROUP_TYPE = globals().get(settings.AUTH_LDAP_GROUP_TYPE_STRING)(name_attr='cn')
+        if not self.settings.GROUP_TYPE and hasattr(settings,'AUTH_LDAP_GROUP_TYPE_STRING') and hasattr(settings,'AUTH_LDAP_GROUP_TYPE_STRING_ATTR'):
+            self.settings.GROUP_TYPE = globals().get(settings.AUTH_LDAP_GROUP_TYPE_STRING)(name_attr=settings.AUTH_LDAP_GROUP_TYPE_STRING_ATTR)
 
         # 用数据信息保存GROUP_SEARCH 信息
         self.settings.GROUP_SEARCH = LDAPSearch(

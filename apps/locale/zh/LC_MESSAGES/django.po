@@ -1964,7 +1964,7 @@ msgstr "使用|分隔各OU"
 msgid "User search filter"
 msgstr "用户过滤器"
 
-#: common/forms.py:110
+#: common/forms.py:148
 msgid "Group OU"
 msgstr "搜索组"
 
@@ -1976,7 +1976,15 @@ msgstr "搜索组的OU"
 msgid "Group search filter"
 msgstr "用户组过滤"
 
-#: common/forms.py:110
+#: common/forms.py:165
+msgid "LDAP Group Type"
+msgstr "LDAP组类型"
+
+#: common/forms.py:168
+msgid "LDAP group type selection,default attr is 'cn'.Configuration parameters: AUTH_LDAP_GROUP_TYPE_STRING='cn'"
+msgstr "LDAP组类型选择，默认属性为'cn'。配置参数：auth_ldap_group_type_string='cn'"
+
+#: common/forms.py:177
 msgid "Group filter condition.Example:(& (cn=%(user)s) (| (objectclass=groupOfNames) (objectclass=groupOfUniqueNames) (objectclass=posixGroup)))"
 msgstr "用户组过滤条件.例:(& (cn=%(user)s) (| (objectclass=groupOfNames) (objectclass=groupOfUniqueNames) (objectclass=posixGroup)))"
 
@@ -1989,7 +1997,7 @@ msgstr "可能的选项是(cn或uid或sAMAccountName=%(user)s)"
 msgid "User attr map"
 msgstr "LDAP属性映射"
 
-#: common/forms.py:116
+#: common/forms.py:137
 msgid ""
 "User attr map present how to map LDAP user attr to jumpserver, username,name,"
 "email is jumpserver attr"

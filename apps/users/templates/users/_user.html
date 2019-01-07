@@ -27,7 +27,7 @@
         {% bootstrap_field form.role layout="horizontal" %}
         <div class="form-group {% if form.date_expired.errors %} has-error {% endif %}" id="date_5">
             <label for="{{ form.date_expired.id_for_label }}" class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label">{{ form.date_expired.label }}</label>
-            <div class="col-bg-8 col-md-7 col-sm-7 col-xs-8">
+            <div class="col-bg-8 col-md-7 col-sm-7 col-xs-8" id="date_choise_id">
                 <div class="input-group date">
                     <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
                     {% if form.errors %}
@@ -68,6 +68,7 @@
             timePicker24Hour: true,
             autoApply: true,
             drops: 'up',
+            parentEl: $("#date_choise_id"),
             locale: datatime_picker_locale
         };
         $(document).ready(function () {

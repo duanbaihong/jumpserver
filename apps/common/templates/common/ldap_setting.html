@@ -40,7 +40,21 @@
                                     {% csrf_token %}
                                     {% for field in form %}
                                         {% if not field.field|is_bool_field %}
-                                            {% bootstrap_field field layout="horizontal" %}
+                                            {% bootstrap_field field exclude='AUTH_LDAP_GROUP_TYPE_STRING,AUTH_LDAP_GROUP_TYPE_STRING_ATTR' layout="horizontal" %}
+                                            {% if field.name == 'AUTH_LDAP_GROUP_TYPE_STRING' %}
+                                                <div class="form-group">
+                                                    <label for="{{ field.id_for_label }}" class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label">{{ field.label }}</label>
+                                                    <div class="col-bg-8 col-md-7 col-sm-7 col-xs-8">
+                                                        <div class="input-group">
+                                                            {{ field }}
+                                                            <div class="input-group-btn">
+                                                                {{form.AUTH_LDAP_GROUP_TYPE_STRING_ATTR}}
+                                                            </div>
+                                                        </div>
+                                                        <span class="" >{{ field.help_text }}</span>
+                                                    </div>
+                                                </div>
+                                            {% endif %}
                                         {% else %}
                                             <div class="form-group">
                                                 <label for="{{ field.id_for_label }}" class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label">{{ field.label }}</label>
@@ -143,3 +157,4 @@ $(document).ready(function () {
 })
 </script>
 {% endblock %}
+    

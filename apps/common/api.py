@@ -101,7 +101,7 @@ class LDAPTestingAPI(APIView):
             else:
                 return Response({"error": _("LDAP User {} Authentication Failed, Make sure the username or password is correct, or there are no find users").format(ldap_username)}, status=401)
         else:
-            return Response({"error": str(serializer.errors)}, status=401)
+            return Response({"error": serializer.errors}, status=401)
 
 
 class ReplayStorageCreateAPI(APIView):
