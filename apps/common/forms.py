@@ -164,13 +164,13 @@ class LDAPSettingForm(BaseForm):
     AUTH_LDAP_GROUP_TYPE_STRING= forms.ChoiceField(
         label=_("LDAP Group Type"),
         choices=GROUP_TYPE_STRING_CHOICES,
-        widget=forms.Select(attrs={'class':'form-control'}),
+        widget=forms.Select(attrs={'class':'form-control','style':"appearance: none;-moz-appearance: none;-webkit-appearance: none;"}),
         help_text=_("LDAP group type selection,default attr is 'cn'.Configuration parameters: AUTH_LDAP_GROUP_TYPE_STRING='cn'")
     )
 
     AUTH_LDAP_GROUP_TYPE_STRING_ATTR = forms.CharField(
         initial='cn',
-        widget=forms.TextInput(attrs={'placeholder': 'name_attr="cn"','class':'form-control','style':'width:140px'}),
+        widget=forms.TextInput(attrs={'placeholder': 'cn','class':'form-control','style':'width:140px'}),
     )
 
     AUTH_LDAP_GROUP_SEARCH_FILTER = forms.CharField(
