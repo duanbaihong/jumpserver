@@ -1,24 +1,23 @@
-FROM alpine
-MAINTAINER dbh888 <duanbaihong@qq.com>
+FROM registry.fit2cloud.com/public/python:v3
+MAINTAINER Jumpserver Team <ibuler@qq.com>
 
-ENV LANG=zh_CN.UTF-8 LC_ALL=zh_CN.UTF-8 VERSION=1.4.6 EXT_PACKAGE="python3 py3-pip dumb-init" EXT_TMP_PACKAGE="make gcc g++"
 WORKDIR /opt/jumpserver
-ADD . /opt/jumpserver
-# ADD https://github.com/jumpserver/jumpserver/archive/${VERSION}.tar.gz /opt/jumpserver
-RUN  echo $VERSION\
-    # tar xvf ${VERSION}.tar.gz \
-    # && mv jumpserver-${VERSION}/* . \
-    # && rm -rf jumpserver-${VERSION} \
-    && apk add --no-cache $(cat requirements/alpine_requirements.txt) ${EXT_PACKAGE} ${EXT_TMP_PACKAGE} \
-    && pip3 install --upgrade pip \
-    && pip3 install -r requirements/requirements.txt \
-    && cp config_docker.py config.py \
-    && apk del ${EXT_TMP_PACKAGE} \
-    && rm -rf ~/.cache/pip　\
-    && ln -sf /usr/bin/python3 /usr/bin/python \
-    && mkdir -p /opt/jumpserver/tmp
+RUN useradd jumpserver
 
-VOLUME ["/opt/jumpserver/data","/opt/jumpserver/logs"]
+COPY ./requirements /tmp/requirements
+
+RUN yum -y install epel-release openldap-clients telnet && cd /tmp/requirements && \
+    yum -y install $(cat rpm_requirements.txt)
+
+RUN cd /tmp/requirements &&  pip install -r requirements.txt
+
+COPY . /opt/jumpserver
+RUN echo > config.yml
+VOLUME /opt/jumpserver/data
+VOLUME /opt/jumpserver/logs
+
+ENV LANG=zh_CN.UTF-8
+ENV LC_ALL=zh_CN.UTF-8
 
 EXPOSE 8080
 ENTRYPOINT ["./entrypoint.sh"]

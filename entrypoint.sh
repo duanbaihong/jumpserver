@@ -1,5 +1,16 @@
-#!/usr/bin/dumb-init /bin/sh
-if [ ! -s config.py ]; then
-    cat config_docker.py > config.py
+#!/bin/bash
+function cleanup()
+{
+    local pids=`jobs -p`
+    if [[ "$pids" != ""  ]]; then
+        kill $pids >/dev/null 2>/dev/null
+    fi
+}
+
+service="all"
+if [ "$1" != "" ];then
+    service=$1
 fi
-exec ./jms start all 
+
+trap cleanup EXIT
+python jms start $service
