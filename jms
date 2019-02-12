@@ -255,7 +255,7 @@ def start_service(s):
         signal.signal(signal.SIGTERM, lambda x, y: stop_event.set())
         while not stop_event.is_set():
             try:
-                time.sleep(10)
+                time.sleep(5)
             except KeyboardInterrupt:
                 stop_event.set()
                 break

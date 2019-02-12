@@ -18,9 +18,11 @@ class LDAPTestSerializer(serializers.Serializer):
     AUTH_LDAP_SEARCH_FILTER = serializers.CharField()
     AUTH_LDAP_USER_ATTR_MAP = serializers.CharField()
     AUTH_LDAP_START_TLS = serializers.BooleanField(required=False)
+    
+class LDAPTestUserSerializer(serializers.Serializer):
     AUTH_LDAP_USERNAME_PASSWORD = serializers.CharField(max_length=1024)
     AUTH_LDAP_USER_NAME = serializers.CharField(max_length=1024)
-
+        
 class OutputSerializer(serializers.Serializer):
     output = serializers.CharField()
     is_end = serializers.BooleanField()
