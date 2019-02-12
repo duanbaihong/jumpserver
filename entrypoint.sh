@@ -1,16 +1,5 @@
-#!/bin/bash
-function cleanup()
-{
-    local pids=`jobs -p`
-    if [[ "$pids" != ""  ]]; then
-        kill $pids >/dev/null 2>/dev/null
-    fi
-}
-
-service="all"
-if [ "$1" != "" ];then
-    service=$1
+#!/usr/bin/dumb-init /bin/sh
+if [ ! -s config.yml ]; then
+    cp -f config_docker.yml config.yml
 fi
-
-trap cleanup EXIT
-python jms start $service
+exec ./jms start all 
