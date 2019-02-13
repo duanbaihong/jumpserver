@@ -223,7 +223,7 @@ class Config(dict):
         mappings.append(kwargs.items())
         for mapping in mappings:
             for (key, value) in mapping:
-                if key.isupper():
+                if key.isupper() and value != '':
                     self[key] = value
         return True
 
@@ -290,23 +290,23 @@ class Config(dict):
 
 
 defaults = {
-    'SECRET_KEY': '',
-    'BOOTSTRAP_TOKEN': '',
-    'DEBUG': True,
-    'SITE_URL': 'http://localhost',
+    'SECRET_KEY': os.environ.get("SECRET_KEY") or '',
+    'BOOTSTRAP_TOKEN': os.environ.get("BOOTSTRAP_TOKEN") or '',
+    'DEBUG': False,
+    'SITE_URL': os.environ.get("SITE_URL") or 'http://localhost',
     'LOG_LEVEL': 'DEBUG',
     'LOG_DIR': os.path.join(PROJECT_DIR, 'logs'),
-    'DB_ENGINE': 'mysql',
-    'DB_NAME': 'jumpserver',
-    'DB_HOST': '127.0.0.1',
-    'DB_PORT': 3306,
-    'DB_USER': 'root',
-    'DB_PASSWORD': '',
-    'REDIS_HOST': '127.0.0.1',
-    'REDIS_PORT': 6379,
-    'REDIS_PASSWORD': '',
-    'REDIS_DB_CELERY': 3,
-    'REDIS_DB_CACHE': 4,
+    'DB_ENGINE': os.environ.get("DB_ENGINE") or 'mysql',
+    'DB_NAME': os.environ.get("DB_NAME") or 'jumpserver',
+    'DB_HOST': os.environ.get("DB_HOST") or '127.0.0.1',
+    'DB_PORT': os.environ.get("DB_PORT") or 3306,
+    'DB_USER': os.environ.get("DB_USER") or 'root',
+    'DB_PASSWORD': os.environ.get("DB_PASSWORD") or '',
+    'REDIS_HOST': os.environ.get("REDIS_HOST") or '127.0.0.1',
+    'REDIS_PORT': os.environ.get("REDIS_PORT") or 6379,
+    'REDIS_PASSWORD': os.environ.get("REDIS_PASSWORD") or '',
+    'REDIS_DB_CELERY': os.environ.get("REDIS_DB_CELERY") or 3,
+    'REDIS_DB_CACHE': os.environ.get("REDIS_DB_CACHE") or 4,
     'CAPTCHA_TEST_MODE': None,
     'TOKEN_EXPIRATION': 3600 * 24,
     'DISPLAY_PER_PAGE': 25,
@@ -336,12 +336,12 @@ defaults = {
     'SECURITY_PASSWORD_LOWER_CASE': False,
     'SECURITY_PASSWORD_NUMBER': False,
     'SECURITY_PASSWORD_SPECIAL_CHAR': False,
-    'AUTH_RADIUS': False,
-    'RADIUS_SERVER': 'localhost',
-    'RADIUS_PORT': 1812,
-    'RADIUS_SECRET': '',
-    'HTTP_BIND_HOST': '0.0.0.0',
-    'HTTP_LISTEN_PORT': 8080,
+    'AUTH_RADIUS': os.environ.get("AUTH_RADIUS") or False,
+    'RADIUS_SERVER': os.environ.get("RADIUS_SERVER") or 'localhost',
+    'RADIUS_PORT': os.environ.get("RADIUS_PORT") or 1812,
+    'RADIUS_SECRET': os.environ.get("RADIUS_SECRET") or '',
+    'HTTP_BIND_HOST': os.environ.get("HTTP_BIND_HOST") or '0.0.0.0',
+    'HTTP_LISTEN_PORT': os.environ.get("HTTP_LISTEN_PORT") or 8080,
 }
 
 

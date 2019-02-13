@@ -13,7 +13,7 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositorie
     && pip3 install --upgrade pip \
     && pip3 install -r requirements/requirements.txt \
     && apk del ${EXT_TMP_PACKAGE} \
-    && rm -rf ~/.cache/pip　\
+    && rm -rf Dockerfile ~/.cache/pip　.gitignore .dockerignore\
     && ln -sf /usr/bin/python3 /usr/bin/python \
     && mkdir -p /opt/jumpserver/tmp
 

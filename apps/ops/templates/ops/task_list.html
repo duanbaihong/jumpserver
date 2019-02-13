@@ -90,12 +90,8 @@ $(document).ready(function() {
         width: 'auto'
     });
     $('#date .input-daterange').datepicker({
-        format: "yyyy-mm-dd",
         todayBtn: "linked",
-        keyboardNavigation: false,
-        forceParse: false,
-        calendarWeeks: true,
-        autoclose: true
+        container: ".wrapper.wrapper-content"
     });
 
 }).on('click', '.btn-del', function () {

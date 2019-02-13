@@ -32,49 +32,46 @@
 
 {% block content %}
 <div class="wrapper wrapper-content">
-   <div class="row">
-       <div class="col-lg-3" id="split-left" style="padding-left: 3px">
-           <div class="ibox float-e-margins">
-               <div class="ibox-content mailbox-content" style="padding-top: 0;padding-left: 1px">
-                   <div class="file-manager ">
-                       <div id="assetTree" class="ztree"></div>
-                       <div class="clearfix"></div>
-                   </div>
-               </div>
-           </div>
-       </div>
-       <div class="col-lg-9 animated fadeInRight" id="split-right">
-           <div class="tree-toggle">
-               <div class="btn btn-sm btn-primary tree-toggle-btn" onclick="toggle()">
-                   <i class="fa fa-angle-left fa-x" id="toggle-icon"></i>
-               </div>
-           </div>
-           <div class="mail-box-header" style="padding-top: 5px;">
-               <form enctype="multipart/form-data" method="post" class="form-horizontal" action="" onsubmit="return execute()">
-                   <div class="form-group">
-                       <div id="term" style="height: 100%;width: 100%"></div>
-                   </div>
-                   <div class="row">
-                       <div class="col-lg-10">
-                       <div class="input-group" style="height: 100%; width: 100%">
-                           <textarea class="form-control" id="command-text"></textarea>
-                       </div>
-                       </div>
-                       <div class="col-lg-2">
-                            <select class="select2 form-control" id="system-users-select">
+    <div class="col-lg-2 col-sm-3" id="split-left" style="padding-left: 3px">
+        <div class="ibox float-e-margins">
+            <div class="ibox-content mailbox-content" style="padding-top: 0;padding-left: 1px">
+                <div class="file-manager ">
+                    <div id="assetTree" class="ztree"></div>
+                    <div class="clearfix"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-10 col-sm-9 animated fadeInRight" id="split-right">
+        <div class="tree-toggle">
+            <div class="btn btn-sm btn-primary tree-toggle-btn" onclick="toggle()"> <i class="fa fa-angle-left fa-x" id="toggle-icon"></i>
+            </div>
+        </div>
+        <div class="mail-box-header" style="padding-top: 5px;">
+            <form enctype="multipart/form-data" method="post" class="form-horizontal" action="" onsubmit="return execute()">
+                <div class="form-group">
+                    <div id="term" style="height: 100%;width: 100%"></div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-10 col-md-9 col-sm-8">
+                        <div class="input-group" style="height: 100%; width: 100%">
+                            <textarea class="form-control" id="command-text"></textarea>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-sm-4">
+                        <select class="select2 form-control" id="system-users-select">
                             {% for s in system_users %}
                                {% if s.protocol == 'ssh' and s.login_mode == 'auto' %}
-                                   <option value="{{ s.id }}">{{ s }}</option>
-                               {% endif %}
+                            <option value="{{ s.id }}">{{ s }}</option>
+                            {% endif %}
                             {% endfor %}
-                            </select>
-                           <button type="button" class="btn btn-primary btn-execute" style="margin-top: 30px; width: 100%">{% trans 'Go' %}</button>
-                       </div>
-                   </div>
-                </form>
-           </div>
-       </div>
-   </div>
+                        </select>
+                        <button type="button" class="btn btn-primary btn-execute" style="margin-top: 30px; width: 100%">{% trans 'Go' %}</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -157,7 +154,7 @@ function toggle() {
             show = 1;
         });
     } else {
-        $("#split-right").attr("class", "col-lg-9");
+        $("#split-right").attr("class", "col-lg-10 col-sm-9");
         $("#toggle-icon").attr("class", "fa fa-angle-left fa-x");
         $("#split-left").show(500);
         show = 0;
@@ -172,6 +169,7 @@ function initResultTerminal() {
         screenKeys: false,
         fontFamily: '"Monaco", "Consolas", "monospace"',
         fontSize: 13,
+        cols:100,
         rightClickSelectsWord: true,
         disableStdin: true,
         theme: {

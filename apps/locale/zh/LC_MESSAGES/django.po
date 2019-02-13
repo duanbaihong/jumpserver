@@ -17,10 +17,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: assets/api/node.py:58
-msgid "You can't update the root node name"
-msgstr "不能修改根节点名称"
-
 #: assets/api/node.py:281
 msgid "Update node asset hardware information: {}"
 msgstr "更新节点资产硬件信息: {}"
@@ -2535,6 +2531,24 @@ msgstr "输出"
 #: ops/templates/ops/adhoc_history_detail.html:30
 msgid "History detail of"
 msgstr "执行历史详情"
+
+#: ops/templates/ops/command_execution_create.html:182
+msgid ""
+"Select the left asset, select the running system user, execute command in "
+"batch"
+msgstr "选择左侧资产, 选择运行的系统用户，批量执行命令"
+
+#: ops/templates/ops/command_execution_create.html:200
+msgid "Unselected assets"
+msgstr "没有选中资产"
+
+#: ops/templates/ops/command_execution_create.html:204
+msgid "No input command"
+msgstr "没有输入命令"
+
+#: ops/templates/ops/command_execution_create.html:208
+msgid "No system user was selected"
+msgstr "没有选择系统用户"
 
 #: ops/templates/ops/adhoc_history_detail.html:53
 msgid "Task name"

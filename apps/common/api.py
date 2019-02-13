@@ -16,7 +16,7 @@ from django.conf import settings
 
 from .permissions import IsOrgAdmin, IsSuperUser
 from .serializers import (
-    MailTestSerializer, LDAPTestSerializer, OutputSerializer
+    MailTestSerializer, LDAPTestSerializer, LDAPTestUserSerializer, OutputSerializer
 )
 from .models import Setting
 
@@ -52,7 +52,7 @@ class MailTestingAPI(APIView):
 
 class LDAPTestingAPI(APIView):
     permission_classes = (IsOrgAdmin,)
-    serializer_class = LDAPTestSerializer
+    serializer_class = LDAPTestUserSerializer
     success_message = _("Test ldap success")
 
     def post(self, request):
