@@ -510,8 +510,8 @@ $(document).ready(function(){
 })
 .on('click', '.labels li', function () {
     var val = $(this).text();
-    $("#asset_list_table_filter input").val(val);
-    asset_table.search(val).draw();
+    $("#asset_list_table_filter input").val(val.trim());
+    asset_table.search(val.trim()).draw();
  })
 .on('click', '.btn_export', function () {
     var $data_table = $('#asset_list_table').DataTable();
