@@ -1,5 +1,5 @@
 amqp==2.1.4
-ansible==2.4.5
+ansible==2.6.18
 asn1crypto==0.24.0
 bcrypt==3.1.4
 billiard==3.5.0.3
@@ -14,7 +14,7 @@ coreapi==2.3.3
 coreschema==0.0.4
 cryptography==2.3.1
 decorator==4.1.2
-Django==2.1.2
+Django==2.1.15
 django-auth-ldap==1.7.0
 django-bootstrap3==9.1.0
 django-celery-beat==1.1.1
@@ -24,10 +24,10 @@ django-ranged-response==0.2.0
 django-redis-cache==1.8.1
 django-rest-swagger==2.1.2
 django-simple-captcha==0.5.6
-djangorestframework==3.8.2
+djangorestframework==3.9.1
 djangorestframework-bulk==0.2.1
 docutils==0.14
-ecdsa==0.13
+ecdsa==0.13.3
 elasticsearch==6.1.1
 enum-compat==0.0.2
 ephem==3.7.6.0
@@ -38,7 +38,7 @@ gunicorn==19.9.0
 idna==2.6
 itsdangerous==0.24
 itypes==1.1.0
-Jinja2==2.10
+Jinja2==2.10.1
 jmespath==0.9.3
 kombu==4.0.2
 ldap3==2.4
@@ -48,7 +48,7 @@ olefile==0.44
 openapi-codec==1.3.2
 paramiko==2.4.2
 passlib==1.7.1
-Pillow==4.3.0
+Pillow==6.2.0
 pyasn1==0.4.2
 pycparser==2.19
 pycrypto==2.6.1
@@ -66,10 +66,10 @@ simplejson==3.13.2
 six==1.11.0
 sshpubkeys==3.1.0
 uritemplate==3.0.0
-urllib3==1.23
+urllib3==1.24.2
 vine==1.1.4
 drf-yasg==1.9.1
-Werkzeug==0.14.1
+Werkzeug==0.15.3
 drf-nested-routers==0.90.2
 aliyun-python-sdk-core-v3==2.9.1    
 aliyun-python-sdk-ecs==4.10.1   
