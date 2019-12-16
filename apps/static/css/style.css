@@ -3410,8 +3410,17 @@ video {
   background: #f8fafb;
 }
 .inmodal .modal-header {
-  padding: 30px 15px;
+  padding: 7px;
   text-align: center;
+}
+.inmodal .modal-header .close{
+  margin-top:6px;
+}
+.inmodal .modal-body{
+  text-align: center;
+}
+.inmodal input[type='file'] {
+  display: initial;
 }
 .animated.modal.fade .modal-dialog {
   -webkit-transform: none;
@@ -8231,6 +8240,7 @@ body.md-skin {
 .wrapper.wrapper-content { 
   height: calc(100% - 158px);
   overflow-y: auto;
+  position: relative;
   overflow-x: hidden;
 }
 .navbar-default.navbar-static-side {

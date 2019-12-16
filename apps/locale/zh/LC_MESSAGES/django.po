@@ -1,4 +1,3 @@
-
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
@@ -9,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jumpserver 0.3.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-12-27 15:48+0800\n"
+"POT-Creation-Date: 2019-01-28 12:56+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: ibuler <ibuler@qq.com>\n"
 "Language-Team: Jumpserver team<ibuler@qq.com>\n"
@@ -18,11 +17,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: assets/api/node.py:261
+#: assets/api/node.py:281
 msgid "Update node asset hardware information: {}"
 msgstr "更新节点资产硬件信息: {}"
 
-#: assets/api/node.py:275
+#: assets/api/node.py:295
 msgid "Test if the assets under the node are connectable: {}"
 msgstr "测试节点下资产是否可连接: {}"
 
@@ -66,9 +65,10 @@ msgstr "网域"
 #: assets/forms/asset.py:124 assets/models/node.py:31
 #: assets/templates/assets/asset_create.html:30
 #: assets/templates/assets/asset_update.html:35 perms/forms.py:45
-#: perms/forms.py:52 perms/models.py:79
+#: perms/forms.py:52 perms/models.py:85
 #: perms/templates/perms/asset_permission_list.html:57
-#: perms/templates/perms/asset_permission_list.html:117
+#: perms/templates/perms/asset_permission_list.html:78
+#: perms/templates/perms/asset_permission_list.html:128
 #: xpack/plugins/cloud/models.py:123
 #: xpack/plugins/cloud/templates/cloud/sync_instance_task_detail.html:63
 #: xpack/plugins/cloud/templates/cloud/sync_instance_task_instance.html:66
@@ -119,8 +119,8 @@ msgstr "端口"
 #: perms/models.py:31
 #: perms/templates/perms/asset_permission_create_update.html:45
 #: perms/templates/perms/asset_permission_list.html:56
-#: perms/templates/perms/asset_permission_list.html:114
-#: terminal/backends/command/models.py:13 terminal/models.py:141
+#: perms/templates/perms/asset_permission_list.html:125
+#: terminal/backends/command/models.py:13 terminal/models.py:155
 #: terminal/templates/terminal/command_list.html:40
 #: terminal/templates/terminal/command_list.html:73
 #: terminal/templates/terminal/session_list.html:41
@@ -157,10 +157,11 @@ msgstr "不能包含特殊字符"
 #: orgs/models.py:12 perms/models.py:28
 #: perms/templates/perms/asset_permission_detail.html:62
 #: perms/templates/perms/asset_permission_list.html:53
-#: perms/templates/perms/asset_permission_user.html:54 terminal/models.py:20
-#: terminal/models.py:198 terminal/templates/terminal/terminal_detail.html:43
+#: perms/templates/perms/asset_permission_list.html:72
+#: perms/templates/perms/asset_permission_user.html:54 terminal/models.py:22
+#: terminal/models.py:233 terminal/templates/terminal/terminal_detail.html:43
 #: terminal/templates/terminal/terminal_list.html:29 users/models/group.py:14
-#: users/models/user.py:53 users/templates/users/_select_user_modal.html:13
+#: users/models/user.py:55 users/templates/users/_select_user_modal.html:13
 #: users/templates/users/user_detail.html:63
 #: users/templates/users/user_group_detail.html:55
 #: users/templates/users/user_group_list.html:12
@@ -184,8 +185,9 @@ msgstr "名称"
 #: assets/templates/assets/system_user_detail.html:62
 #: assets/templates/assets/system_user_list.html:30
 #: audits/templates/audits/login_log_list.html:49
+#: perms/templates/perms/asset_permission_list.html:74
 #: perms/templates/perms/asset_permission_user.html:55 users/forms.py:15
-#: users/forms.py:33 users/models/authentication.py:77 users/models/user.py:51
+#: users/forms.py:33 users/models/authentication.py:77 users/models/user.py:53
 #: users/templates/users/_select_user_modal.html:14
 #: users/templates/users/login.html:64
 #: users/templates/users/user_detail.html:67
@@ -211,7 +213,7 @@ msgstr "密码或密钥密码"
 msgid "Password"
 msgstr "密码"
 
-#: assets/forms/user.py:29 users/models/user.py:80
+#: assets/forms/user.py:29 users/models/user.py:82
 msgid "Private key"
 msgstr "ssh私钥"
 
@@ -275,6 +277,7 @@ msgstr "IP"
 #: assets/templates/assets/user_asset_list.html:45
 #: assets/templates/assets/user_asset_list.html:150 common/forms.py:130
 #: perms/templates/perms/asset_permission_asset.html:54
+#: perms/templates/perms/asset_permission_list.html:77
 #: users/templates/users/user_granted_asset.html:44
 #: users/templates/users/user_group_granted_asset.html:44
 msgid "Hostname"
@@ -382,8 +385,8 @@ msgstr "标签管理"
 #: assets/templates/assets/domain_detail.html:72
 #: assets/templates/assets/system_user_detail.html:100
 #: ops/templates/ops/adhoc_detail.html:86 orgs/models.py:15 perms/models.py:37
-#: perms/models.py:84 perms/templates/perms/asset_permission_detail.html:98
-#: users/models/user.py:94 users/templates/users/user_detail.html:111
+#: perms/models.py:90 perms/templates/perms/asset_permission_detail.html:98
+#: users/models/user.py:96 users/templates/users/user_detail.html:111
 #: xpack/plugins/cloud/models.py:55 xpack/plugins/cloud/models.py:127
 msgid "Created by"
 msgstr "创建者"
@@ -395,7 +398,7 @@ msgstr "创建者"
 #: assets/templates/assets/domain_detail.html:68
 #: assets/templates/assets/system_user_detail.html:96
 #: ops/templates/ops/adhoc_detail.html:90 ops/templates/ops/task_detail.html:64
-#: orgs/models.py:16 perms/models.py:38 perms/models.py:85
+#: orgs/models.py:16 perms/models.py:38 perms/models.py:91
 #: perms/templates/perms/asset_permission_detail.html:94
 #: terminal/templates/terminal/terminal_detail.html:59 users/models/group.py:17
 #: users/templates/users/user_group_detail.html:63
@@ -423,9 +426,9 @@ msgstr "创建日期"
 #: assets/templates/assets/system_user_list.html:37
 #: assets/templates/assets/user_asset_list.html:159 common/models.py:34
 #: ops/models/adhoc.py:43 orgs/models.py:17 perms/models.py:39
-#: perms/models.py:86 perms/templates/perms/asset_permission_detail.html:102
-#: terminal/models.py:30 terminal/templates/terminal/terminal_detail.html:63
-#: users/models/group.py:15 users/models/user.py:86
+#: perms/models.py:92 perms/templates/perms/asset_permission_detail.html:102
+#: terminal/models.py:32 terminal/templates/terminal/terminal_detail.html:63
+#: users/models/group.py:15 users/models/user.py:88
 #: users/templates/users/user_detail.html:127
 #: users/templates/users/user_group_detail.html:67
 #: users/templates/users/user_group_list.html:14
@@ -458,7 +461,7 @@ msgstr "可连接"
 
 #: assets/models/asset.py:119 assets/models/base.py:36
 msgid "Unknown"
-msgstr ""
+msgstr "未知"
 
 #: assets/models/base.py:25
 msgid "SSH private key"
@@ -476,7 +479,7 @@ msgstr "带宽"
 msgid "Contact"
 msgstr "联系人"
 
-#: assets/models/cluster.py:22 users/models/user.py:72
+#: assets/models/cluster.py:22 users/models/user.py:74
 #: users/templates/users/user_detail.html:76
 msgid "Phone"
 msgstr "手机"
@@ -502,7 +505,7 @@ msgid "Default"
 msgstr "默认"
 
 #: assets/models/cluster.py:36 assets/models/label.py:14
-#: users/models/user.py:439
+#: users/models/user.py:441
 msgid "System"
 msgstr "系统"
 
@@ -530,8 +533,8 @@ msgstr "BGP全网通"
 msgid "Regex"
 msgstr "正则表达式"
 
-#: assets/models/cmd_filter.py:36 ops/models/command.py:19
-#: ops/templates/ops/command_execution_list.html:60 terminal/models.py:147
+#: assets/models/cmd_filter.py:36 ops/models/command.py:21
+#: ops/templates/ops/command_execution_list.html:60 terminal/models.py:161
 #: terminal/templates/terminal/command_list.html:55
 #: terminal/templates/terminal/command_list.html:71
 #: terminal/templates/terminal/session_detail.html:48
@@ -634,13 +637,13 @@ msgstr "默认资产组"
 #: perms/models.py:29
 #: perms/templates/perms/asset_permission_create_update.html:41
 #: perms/templates/perms/asset_permission_list.html:54
-#: perms/templates/perms/asset_permission_list.html:108 templates/index.html:87
-#: terminal/backends/command/models.py:12 terminal/models.py:140
+#: perms/templates/perms/asset_permission_list.html:119 templates/index.html:87
+#: terminal/backends/command/models.py:12 terminal/models.py:154
 #: terminal/templates/terminal/command_list.html:32
 #: terminal/templates/terminal/command_list.html:72
 #: terminal/templates/terminal/session_list.html:33
 #: terminal/templates/terminal/session_list.html:71 users/forms.py:303
-#: users/models/user.py:33 users/models/user.py:427
+#: users/models/user.py:33 users/models/user.py:429
 #: users/templates/users/user_group_detail.html:78
 #: users/templates/users/user_group_list.html:13 users/views/user.py:386
 #: xpack/plugins/orgs/forms.py:26
@@ -718,11 +721,12 @@ msgstr "登录模式"
 #: assets/models/user.py:247 assets/templates/assets/user_asset_list.html:156
 #: audits/models.py:19 audits/templates/audits/ftp_log_list.html:49
 #: audits/templates/audits/ftp_log_list.html:72 perms/forms.py:48
-#: perms/models.py:33 perms/models.py:81
+#: perms/models.py:33 perms/models.py:87
 #: perms/templates/perms/asset_permission_detail.html:140
 #: perms/templates/perms/asset_permission_list.html:58
-#: perms/templates/perms/asset_permission_list.html:120 templates/_nav.html:25
-#: terminal/backends/command/models.py:14 terminal/models.py:142
+#: perms/templates/perms/asset_permission_list.html:79
+#: perms/templates/perms/asset_permission_list.html:131 templates/_nav.html:25
+#: terminal/backends/command/models.py:14 terminal/models.py:156
 #: terminal/templates/terminal/command_list.html:48
 #: terminal/templates/terminal/command_list.html:74
 #: terminal/templates/terminal/session_list.html:49
@@ -736,68 +740,68 @@ msgstr "系统用户"
 msgid "%(value)s is not an even number"
 msgstr "%(value)s is not an even number"
 
-#: assets/tasks.py:31
+#: assets/tasks.py:33
 msgid "Asset has been disabled, skipped: {}"
 msgstr "资产或许不支持ansible, 跳过: {}"
 
-#: assets/tasks.py:35
+#: assets/tasks.py:37
 msgid "Asset may not be support ansible, skipped: {}"
 msgstr "资产或许不支持ansible, 跳过: {}"
 
-#: assets/tasks.py:40
+#: assets/tasks.py:42
 msgid "No assets matched, stop task"
 msgstr "没有匹配到资产，结束任务"
 
-#: assets/tasks.py:65
+#: assets/tasks.py:67
 msgid "Get asset info failed: {}"
 msgstr "获取资产信息失败：{}"
 
-#: assets/tasks.py:115
+#: assets/tasks.py:117
 msgid "Update some assets hardware info"
 msgstr "更新资产硬件信息"
 
-#: assets/tasks.py:134
+#: assets/tasks.py:136
 msgid "Update asset hardware info: {}"
 msgstr "更新资产硬件信息: {}"
 
-#: assets/tasks.py:159
+#: assets/tasks.py:161
 msgid "Test assets connectivity"
 msgstr "测试资产可连接性"
 
-#: assets/tasks.py:183
+#: assets/tasks.py:185
 msgid "Test assets connectivity: {}"
 msgstr "测试资产可连接性: {}"
 
-#: assets/tasks.py:222
+#: assets/tasks.py:224
 msgid "Test admin user connectivity period: {}"
 msgstr "定期测试管理账号可连接性: {}"
 
-#: assets/tasks.py:228
+#: assets/tasks.py:231
 msgid "Test admin user connectivity: {}"
 msgstr "测试管理行号可连接性: {}"
 
-#: assets/tasks.py:266
+#: assets/tasks.py:270
 msgid "Test system user connectivity: {}"
 msgstr "测试系统用户可连接性: {}"
 
-#: assets/tasks.py:273
+#: assets/tasks.py:277
 msgid "Test system user connectivity: {} => {}"
 msgstr "测试系统用户可连接性: {} => {}"
 
-#: assets/tasks.py:286
+#: assets/tasks.py:290
 msgid "Test system user connectivity period: {}"
 msgstr "定期测试系统用户可连接性: {}"
 
-#: assets/tasks.py:358
+#: assets/tasks.py:362
 msgid ""
 "Push system user task skip, auto push not enable or protocol is not ssh: {}"
 msgstr "推送系统用户任务跳过，自动推送没有打开，或协议不是ssh: {}"
 
-#: assets/tasks.py:378 assets/tasks.py:392
+#: assets/tasks.py:382 assets/tasks.py:396
 msgid "Push system users to assets: {}"
 msgstr "推送系统用户到入资产: {}"
 
-#: assets/tasks.py:384
+#: assets/tasks.py:388
 msgid "Push system users to asset: {} => {}"
 msgstr "推送系统用户到入资产: {} => {}"
 
@@ -881,7 +885,7 @@ msgstr "自动生成密钥"
 #: assets/templates/assets/asset_update.html:64
 #: assets/templates/assets/gateway_create_update.html:53
 #: perms/templates/perms/asset_permission_create_update.html:50
-#: terminal/templates/terminal/terminal_update.html:42
+#: terminal/templates/terminal/terminal_update.html:40
 msgid "Other"
 msgstr "其它"
 
@@ -2527,6 +2531,24 @@ msgstr "输出"
 #: ops/templates/ops/adhoc_history_detail.html:30
 msgid "History detail of"
 msgstr "执行历史详情"
+
+#: ops/templates/ops/command_execution_create.html:182
+msgid ""
+"Select the left asset, select the running system user, execute command in "
+"batch"
+msgstr "选择左侧资产, 选择运行的系统用户，批量执行命令"
+
+#: ops/templates/ops/command_execution_create.html:200
+msgid "Unselected assets"
+msgstr "没有选中资产"
+
+#: ops/templates/ops/command_execution_create.html:204
+msgid "No input command"
+msgstr "没有输入命令"
+
+#: ops/templates/ops/command_execution_create.html:208
+msgid "No system user was selected"
+msgstr "没有选择系统用户"
 
 #: ops/templates/ops/adhoc_history_detail.html:53
 msgid "Task name"

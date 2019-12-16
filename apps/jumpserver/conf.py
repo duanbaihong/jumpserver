@@ -193,14 +193,16 @@ class Config(dict):
         if self.root_path:
             filename = os.path.join(self.root_path, filename)
         try:
-            with open(filename) as json_file:
-                obj = yaml.load(json_file)
+            with open(filename) as f:
+                obj = yaml.load(f)
         except IOError as e:
             if silent and e.errno in (errno.ENOENT, errno.EISDIR):
                 return False
             e.strerror = 'Unable to load configuration file (%s)' % e.strerror
             raise
-        return self.from_mapping(obj)
+        if obj:
+            return self.from_mapping(obj)
+        return True
 
     def from_mapping(self, *mapping, **kwargs):
         """Updates the config like :meth:`update` ignoring items with non-upper
@@ -221,7 +223,7 @@ class Config(dict):
         mappings.append(kwargs.items())
         for mapping in mappings:
             for (key, value) in mapping:
-                if key.isupper():
+                if key.isupper() and value != '':
                     self[key] = value
         return True
 
@@ -278,6 +280,8 @@ class Config(dict):
             return value
         value = os.environ.get(item, None)
         if value is not None:
+            if value.isdigit():
+                value = int(value)
             return value
         return self.defaults.get(item)
 
@@ -286,23 +290,23 @@ class Config(dict):
 
 
 defaults = {
-    'SECRET_KEY': '2vym+ky!997d5kkcc64mnz06y1mmui3lut#(^wd=%s_qj$1%x',
-    'BOOTSTRAP_TOKEN': 'PleaseChangeMe',
-    'DEBUG': True,
-    'SITE_URL': 'http://localhost',
+    'SECRET_KEY': os.environ.get("SECRET_KEY") or '',
+    'BOOTSTRAP_TOKEN': os.environ.get("BOOTSTRAP_TOKEN") or '',
+    'DEBUG': False,
+    'SITE_URL': os.environ.get("SITE_URL") or 'http://localhost',
     'LOG_LEVEL': 'DEBUG',
     'LOG_DIR': os.path.join(PROJECT_DIR, 'logs'),
-    'DB_ENGINE': 'mysql',
-    'DB_NAME': 'jumpserver',
-    'DB_HOST': '127.0.0.1',
-    'DB_PORT': 3306,
-    'DB_USER': 'root',
-    'DB_PASSWORD': '',
-    'REDIS_HOST': '127.0.0.1',
-    'REDIS_PORT': 6379,
-    'REDIS_PASSWORD': '',
-    'REDIS_DB_CELERY': 3,
-    'REDIS_DB_CACHE': 4,
+    'DB_ENGINE': os.environ.get("DB_ENGINE") or 'mysql',
+    'DB_NAME': os.environ.get("DB_NAME") or 'jumpserver',
+    'DB_HOST': os.environ.get("DB_HOST") or '127.0.0.1',
+    'DB_PORT': os.environ.get("DB_PORT") or 3306,
+    'DB_USER': os.environ.get("DB_USER") or 'root',
+    'DB_PASSWORD': os.environ.get("DB_PASSWORD") or '',
+    'REDIS_HOST': os.environ.get("REDIS_HOST") or '127.0.0.1',
+    'REDIS_PORT': os.environ.get("REDIS_PORT") or 6379,
+    'REDIS_PASSWORD': os.environ.get("REDIS_PASSWORD") or '',
+    'REDIS_DB_CELERY': os.environ.get("REDIS_DB_CELERY") or 3,
+    'REDIS_DB_CACHE': os.environ.get("REDIS_DB_CACHE") or 4,
     'CAPTCHA_TEST_MODE': None,
     'TOKEN_EXPIRATION': 3600 * 24,
     'DISPLAY_PER_PAGE': 25,
@@ -312,6 +316,7 @@ defaults = {
     'SESSION_COOKIE_AGE': 3600 * 24,
     'SESSION_EXPIRE_AT_BROWSER_CLOSE': False,
     'AUTH_OPENID': False,
+    'OTP_VALID_WINDOW': 0,
     'OTP_ISSUER_NAME': 'Jumpserver',
     'EMAIL_SUFFIX': 'jumpserver.org',
     'TERMINAL_PASSWORD_AUTH': True,
@@ -320,6 +325,7 @@ defaults = {
     'TERMINAL_ASSET_LIST_SORT_BY': 'hostname',
     'TERMINAL_ASSET_LIST_PAGE_SIZE': 'auto',
     'TERMINAL_SESSION_KEEP_DURATION': 9999,
+    'TERMINAL_HOST_KEY': '',
     'SECURITY_MFA_AUTH': False,
     'SECURITY_LOGIN_LIMIT_COUNT': 7,
     'SECURITY_LOGIN_LIMIT_TIME': 30,
@@ -330,21 +336,48 @@ defaults = {
     'SECURITY_PASSWORD_LOWER_CASE': False,
     'SECURITY_PASSWORD_NUMBER': False,
     'SECURITY_PASSWORD_SPECIAL_CHAR': False,
+    'AUTH_RADIUS': os.environ.get("AUTH_RADIUS") or False,
+    'RADIUS_SERVER': os.environ.get("RADIUS_SERVER") or 'localhost',
+    'RADIUS_PORT': os.environ.get("RADIUS_PORT") or 1812,
+    'RADIUS_SECRET': os.environ.get("RADIUS_SECRET") or '',
+    'HTTP_BIND_HOST': os.environ.get("HTTP_BIND_HOST") or '0.0.0.0',
+    'HTTP_LISTEN_PORT': os.environ.get("HTTP_LISTEN_PORT") or 8080,
 }
+
+
+def load_from_object(config):
+    try:
+        from config import config as c
+        config.from_object(c)
+        return True
+    except ImportError:
+        pass
+    return False
+
+
+def load_from_yml(config):
+    for i in ['config.yml', 'config.yaml']:
+        if not os.path.isfile(os.path.join(config.root_path, i)):
+            continue
+        loaded = config.from_yaml(i)
+        if loaded:
+            return True
+    return False
 
 
 def load_user_config():
     sys.path.insert(0, PROJECT_DIR)
     config = Config(PROJECT_DIR, defaults)
-    try:
-        from config import config as c
-        config.from_object(c)
-    except ImportError:
+
+    loaded = load_from_object(config)
+    if not loaded:
+        loaded = load_from_yml(config)
+    if not loaded:
         msg = """
     
         Error: No config file found.
     
-        You can run `cp config_example.py config.py`, and edit it.
+        You can run `cp config_example.yml config.yml`, and edit it.
         """
         raise ImportError(msg)
     return config

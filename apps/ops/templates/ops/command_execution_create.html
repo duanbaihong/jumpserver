@@ -4,20 +4,20 @@
 {% load bootstrap3 %}
 
 {% block custom_head_css_js %}
-<link href="{% static 'css/plugins/ztree/awesomeStyle/awesome.css' %}" rel="stylesheet">
-<script type="text/javascript" src="{% static 'js/plugins/ztree/jquery.ztree.all.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/plugins/ztree/jquery.ztree.exhide.min.js' %}"></script>
-<script src="{% static 'js/jquery.form.min.js' %}"></script>
-<script src="{% static 'js/plugins/xterm/xterm.js' %}"></script>
-<link rel="stylesheet" href="{% static 'js/plugins/xterm/xterm.css' %}" />
-<script src="{% static 'js/plugins/xterm/addons/fit/fit.js' %}"></script>
-<script src="{% static 'js/plugins/codemirror/codemirror.js' %}"></script>
-<script src="{% static 'js/plugins/codemirror/mode/shell/shell.js' %}"></script>
-<link href="{% static 'css/plugins/codemirror/codemirror.css' %}" rel="stylesheet">
-<link href="{% static 'css/plugins/codemirror/ambiance.css' %}" rel="stylesheet">
-<link href="{% static 'css/plugins/select2/select2.min.css' %}" rel="stylesheet">
-<script src="{% static 'js/plugins/select2/select2.full.min.js' %}"></script>
-<style type="text/css">
+    <link href="{% static 'css/plugins/ztree/awesomeStyle/awesome.css' %}" rel="stylesheet">
+    <script type="text/javascript" src="{% static 'js/plugins/ztree/jquery.ztree.all.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/plugins/ztree/jquery.ztree.exhide.min.js' %}"></script>
+    <script src="{% static 'js/jquery.form.min.js' %}"></script>
+    <script src="{% static 'js/plugins/xterm/xterm.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'js/plugins/xterm/xterm.css' %}" />
+    <script src="{% static 'js/plugins/xterm/addons/fit/fit.js' %}"></script>
+    <script src="{% static 'js/plugins/codemirror/codemirror.js' %}"></script>
+    <script src="{% static 'js/plugins/codemirror/mode/shell/shell.js' %}"></script>
+    <link href="{% static 'css/plugins/codemirror/codemirror.css' %}" rel="stylesheet">
+    <link href="{% static 'css/plugins/codemirror/ambiance.css' %}" rel="stylesheet">
+    <link href="{% static 'css/plugins/select2/select2.min.css' %}" rel="stylesheet">
+    <script src="{% static 'js/plugins/select2/select2.full.min.js' %}"></script>
+	<style type="text/css">
         .xterm .xterm-screen canvas {
             position: absolute;
             left: 0;
@@ -27,12 +27,12 @@
         .select2-container .select2-selection--single {
             height: 34px;
         }
-    </style>
+	</style>
 {% endblock %}
 
 {% block content %}
 <div class="wrapper wrapper-content">
-    <div class="col-lg-2 col-sm-3" id="split-left" style="padding: 3px">
+    <div class="col-lg-2 col-sm-3" id="split-left" style="padding-left: 3px">
         <div class="ibox float-e-margins">
             <div class="ibox-content mailbox-content" style="padding-top: 0;padding-left: 1px">
                 <div class="file-manager ">
@@ -96,8 +96,8 @@ function initTree() {
         },
         edit: {
             enable: true,
-            showRemoveBtn: false,
-            showRenameBtn: false,
+			showRemoveBtn: false,
+			showRenameBtn: false,
             drag: {
                 isCopy: true,
                 isMove: true
@@ -121,16 +121,16 @@ function initTree() {
 function getSelectedAssetsNode() {
     var nodes = zTree.getCheckedNodes(true);
     var assetsNodeId = [];
-    var assetsNode = [];
-    nodes.forEach(function (node) {
-        if (node.meta.type === 'asset' && !node.isHidden && node.meta.asset.protocol === 'ssh') {
-            if (assetsNodeId.indexOf(node.id) === -1) {
-                assetsNodeId.push(node.id);
+	var assetsNode = [];
+	nodes.forEach(function (node) {
+	    if (node.meta.type === 'asset' && !node.isHidden && node.meta.asset.protocol === 'ssh') {
+	        if (assetsNodeId.indexOf(node.id) === -1) {
+	            assetsNodeId.push(node.id);
                 assetsNode.push(node)
             }
         }
     });
-    return assetsNode;
+	return assetsNode;
 }
 
 function onCheck(e, treeId, treeNode) {
@@ -138,12 +138,12 @@ function onCheck(e, treeId, treeNode) {
     var nodes_names = nodes.map(function (node) {
         return node.name;
     });
-    var message = "已选择资产: ";
-    message += nodes_names.join(", ");
-    message += "\r\n";
-    message += "总共: " + nodes_names.length + "个\r\n";
-    term.clear();
-    term.write(message)
+    var message = "{% trans 'Selected assets' %}" + ': ';
+	message += nodes_names.join(", ");
+	message += "\r\n";
+    message += "{% trans 'In total' %}" + ': ' + nodes_names.length + "个\r\n";
+	term.clear();
+	term.write(message)
 }
 
 function toggle() {
@@ -167,9 +167,9 @@ function initResultTerminal() {
     term = new Terminal({
         cursorBlink: false,
         screenKeys: false,
-        cols:100,
         fontFamily: '"Monaco", "Consolas", "monospace"',
         fontSize: 13,
+        cols:100,
         rightClickSelectsWord: true,
         disableStdin: true,
         theme: {
@@ -177,7 +177,7 @@ function initResultTerminal() {
         }
     });
     term.open(document.getElementById('term'));
-    term.write("选择左侧资产, 选择运行的系统用户，批量执行命令\r\n")
+    term.write("{% trans 'Select the left asset, select the running system user, execute command in batch' %}" + "\r\n")
 }
 
 function wrapperError(msg) {
@@ -195,15 +195,15 @@ function execute() {
         return node.id;
     });
     if (hosts.length === 0) {
-        term.write(wrapperError('没有选中资产'));
+        term.write(wrapperError("{% trans 'Unselected assets' %}"));
         return
     }
     if (!command) {
-        term.write(wrapperError('没有输入命令'));
+        term.write(wrapperError("{% trans 'No input command' %}"));
         return
     }
     if (!run_as) {
-        term.write(wrapperError('没有选择运行用户'));
+        term.write(wrapperError("{% trans 'No system user was selected' %}"));
         return
     }
     var data = {

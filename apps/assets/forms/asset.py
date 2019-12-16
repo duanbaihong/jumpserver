@@ -33,7 +33,6 @@ class AssetCreateForm(OrgModelForm):
                 'class': 'select2', 'data-placeholder': _('Label')
             }),
             'port': forms.TextInput(),
-            'is_active':forms.CheckboxInput(attrs={'class':'111'}),
             'domain': forms.Select(attrs={
                 'class': 'select2', 'data-placeholder': _('Domain')
             }),
