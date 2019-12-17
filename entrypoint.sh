@@ -1,5 +1,12 @@
 #!/usr/bin/dumb-init /bin/sh
+. init_jumpserver
+formatOutput title
 if [ ! -s config.yml ]; then
-    cp -f config_example.yml config.yml
+    formatOutput "Fix File Permissions...."
+    chown root.root . -R
+    printOK $?
+    formatOutput "Generate configuration file config.yml...."
+    cat config_example.yml > config.yml
+    printOK $?
 fi
 exec ./jms start all 

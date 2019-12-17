@@ -294,12 +294,10 @@ body.mini-navbar .navbar-default .nav > li > .nav-second-level li a {
   color: #1cc09f;
 }
 .logo-element {
-  text-align: center;
-  font-size: 18px;
-  font-weight: 600;
-  color: white;
-  display: none;
-  padding: 18px 0;
+  background-repeat: no-repeat;
+  background-image: url(/static/img/logo-text.png);
+  background-size: 220px auto;
+  transition: all .3s ease-in-out;
 }
 .pace-done .navbar-static-side,
 .pace-done .nav-header,
@@ -358,13 +356,9 @@ body.fixed-nav.fixed-nav-basic.fixed-sidebar.mini-navbar.body-small .navbar-fixe
 body.mini-navbar .navbar-static-side {
   width: 70px;
 }
-body.mini-navbar .profile-element,
 body.mini-navbar .nav-label,
 body.mini-navbar .navbar-default .nav li a span {
   display: none;
-}
-body.canvas-menu .profile-element {
-  display: block;
 }
 body:not(.fixed-sidebar):not(.canvas-menu).mini-navbar .nav-second-level {
   display: none;
@@ -373,10 +367,12 @@ body.mini-navbar .navbar-default .nav > li > a {
   font-size: 16px;
 }
 body.mini-navbar .logo-element {
-  display: block;
+  background-image: url(/static/img/logo.png);
+  background-size: 55px auto;
+  background-position: 5px;
 }
 body.canvas-menu .logo-element {
-  display: none;
+  background-image: url(/static/img/logo-text.png);
 }
 body.mini-navbar .nav-header {
   padding: 0;
@@ -451,9 +447,6 @@ body.fixed-sidebar.mini-navbar .navbar-default .nav li a span,
 body.canvas-menu.mini-navbar .nav-label,
 body.canvas-menu.mini-navbar .navbar-default .nav li a span {
   display: inline;
-}
-body.canvas-menu.mini-navbar .navbar-default .nav li .profile-element a span {
-  display: block;
 }
 .canvas-menu.mini-navbar .nav-second-level li a,
 .fixed-sidebar.mini-navbar .nav-second-level li a {
@@ -4352,7 +4345,7 @@ body.modal-open .animated {
   z-index: inherit;
 }
 /* Show profile dropdown on fixed sidebar */
-body.mini-navbar.fixed-sidebar .profile-element,
+
 .block {
   display: block !important;
 }
@@ -4360,7 +4353,7 @@ body.mini-navbar.fixed-sidebar .nav-header {
   padding: 33px 25px;
 }
 body.mini-navbar.fixed-sidebar .logo-element {
-  display: none;
+  background-image: url(/static/img/logo-text.png);
 }
 .fullscreen-video .animated {
   animation: none;
@@ -7592,9 +7585,9 @@ body.skin-2 {
 .skin-2 .nav > li.active {
   background: #e0e0e0;
 }
-.skin-2 .logo-element {
+/*.skin-2 .logo-element {
   padding: 17px 0;
-}
+}*/
 .skin-2 .nav > li > a,
 .skin-2 .welcome-message {
   color: #edf6ff;

@@ -1,13 +1,7 @@
 {% load static %}
 {% load i18n %}
 <li class="nav-header">
-    <div class="profile-element" style="height: 65px">
-        <div href="http://www.jumpserver.org" target="_blank" style="width: 100%; background-image: url({% static 'img/header-profile.png' %})">
-            <img alt="logo" height="55" width="185" src="/static/img/logo-text.png"/>
-        </div>
-    </div>
-    <div class="logo-element">
-        <img alt="image" height="40" src="/static/img/logo.png"/>
+    <div class="logo-element" style="height: 65px">
     </div>
     {% if ADMIN_ORGS and request.COOKIES.IN_ADMIN_PAGE != 'No' %}
         {% if ADMIN_ORGS|length > 1 or not CURRENT_ORG.is_default %}
