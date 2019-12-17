@@ -369,7 +369,7 @@ body.mini-navbar .navbar-default .nav > li > a {
 body.mini-navbar .logo-element {
   background-image: url(/static/img/logo.png);
   background-size: 55px auto;
-  background-position: 5px;
+  background-position: 7px;
 }
 body.canvas-menu .logo-element {
   background-image: url(/static/img/logo-text.png);
