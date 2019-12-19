@@ -1579,7 +1579,7 @@ table.dataTable thead .sorting_desc_disabled {
   background: transparent;
 }
 .dataTables_wrapper {
-  padding-bottom: 30px;
+  padding-bottom: 0px;
 }
 /*.dataTables_length {*/
   /*float: left;*/
@@ -3405,9 +3405,9 @@ video {
   z-index: 2200;
 }
 .modal-body {
-  padding: 20px 30px 0px 0px;
+  padding: 10px;
 }
-.inmodal .modal-body {
+/*.inmodal .modal-body {
   background: #f8fafb;
 }
 .inmodal .modal-header {
@@ -3426,7 +3426,7 @@ video {
 .inmodal .modal-icon {
   font-size: 84px;
   color: #e2e3e3;
-}
+}*/
 .modal-footer {
   margin-top: 0;
 }
@@ -3440,7 +3440,7 @@ video {
   padding: 0 10px;
 }
 .wrapper-content {
-  padding: 10px 10px 10px;
+  padding: 10px 0px 5px 5px;
 }
 #page-wrapper {
   padding: 0 10px;
