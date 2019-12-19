@@ -1,26 +1,40 @@
 
+import re
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
-from rest_framework_bulk import BulkListSerializer
-
 from users.models import User, UserGroup
 from assets.models import Asset, Domain, AdminUser, SystemUser, Label
+from assets.const import (
+    GENERAL_FORBIDDEN_SPECIAL_CHARACTERS_PATTERN,
+    GENERAL_FORBIDDEN_SPECIAL_CHARACTERS_ERROR_MSG
+)
 from perms.models import AssetPermission
+from common.serializers import AdaptedBulkListSerializer
 from .utils import set_current_org, get_current_org
 from .models import Organization
-from .mixins import OrgMembershipSerializerMixin
+from .mixins.serializers import OrgMembershipSerializerMixin
 
 
 class OrgSerializer(ModelSerializer):
     class Meta:
         model = Organization
-        list_serializer_class = BulkListSerializer
+        list_serializer_class = AdaptedBulkListSerializer
         fields = '__all__'
-        read_only_fields = ['id', 'created_by', 'date_created']
+        read_only_fields = ['created_by', 'date_created']
+
+    @staticmethod
+    def validate_name(name):
+        pattern = GENERAL_FORBIDDEN_SPECIAL_CHARACTERS_PATTERN
+        res = re.search(pattern, name)
+        if res is not None:
+            msg = GENERAL_FORBIDDEN_SPECIAL_CHARACTERS_ERROR_MSG
+            raise serializers.ValidationError(msg)
+        return name
 
 
 class OrgReadSerializer(ModelSerializer):
     admins = serializers.SlugRelatedField(slug_field='name', many=True, read_only=True)
+    auditors = serializers.SlugRelatedField(slug_field='name', many=True, read_only=True)
     users = serializers.SlugRelatedField(slug_field='name', many=True, read_only=True)
     user_groups = serializers.SerializerMethodField()
     assets = serializers.SerializerMethodField()
@@ -70,12 +84,12 @@ class OrgReadSerializer(ModelSerializer):
 class OrgMembershipAdminSerializer(OrgMembershipSerializerMixin, ModelSerializer):
     class Meta:
         model = Organization.admins.through
-        list_serializer_class = BulkListSerializer
+        list_serializer_class = AdaptedBulkListSerializer
         fields = '__all__'
 
 
 class OrgMembershipUserSerializer(OrgMembershipSerializerMixin, ModelSerializer):
     class Meta:
         model = Organization.users.through
-        list_serializer_class = BulkListSerializer
+        list_serializer_class = AdaptedBulkListSerializer
         fields = '__all__'

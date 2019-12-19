@@ -319,10 +319,7 @@ function toggle() {
 }
 
 
-$(document).ready(function () {
-    $('.treebox').css('height', window.innerHeight - 60);
-})
-.on('click', '.btn-show-current-asset', function(){
+$(document).on('click', '.btn-show-current-asset', function(){
     hideRMenu();
     $(this).css('display', 'none');
     $('#show_all_asset').css('display', 'inline-block');

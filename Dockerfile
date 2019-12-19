@@ -6,9 +6,6 @@ ENV LANG=zh_CN.UTF-8 LC_ALL=zh_CN.UTF-8 VERSION=1.4.6 EXT_PACKAGE="python3 py3-p
 COPY . /opt/jumpserver
 # ADD https://github.com/jumpserver/jumpserver/archive/${VERSION}.tar.gz /opt/jumpserver
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories \
-    # tar xvf ${VERSION}.tar.gz \
-    # && mv jumpserver-${VERSION}/* . \
-    # && rm -rf jumpserver-${VERSION} \
     && mkdir -p /root/.config/pip/ \
     && echo -e "[global]\nindex-url = http://mirrors.aliyun.com/pypi/simple\n[install]\ntrusted-host=mirrors.aliyun.com" >$HOME/.config/pip/pip.conf \
     && apk add --no-cache $(cat /opt/jumpserver/requirements/alpine_requirements.txt) ${EXT_PACKAGE} ${EXT_TMP_PACKAGE} \

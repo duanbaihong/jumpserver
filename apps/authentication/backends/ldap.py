@@ -7,6 +7,7 @@ from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from django_auth_ldap.backend import _LDAPUser, LDAPBackend
 from django_auth_ldap.config import _LDAPConfig, LDAPSearch, LDAPSearchUnion, PosixGroupType, GroupOfNamesType, GroupOfUniqueNamesType, OrganizationalRoleGroupType, NestedGroupOfNamesType, NestedGroupOfUniqueNamesType, NestedOrganizationalRoleGroupType
 from users.models import UserGroup
+from users.models.user import RoleMixin
 from common.utils import get_signer, validate_ssh_public_key
 
 from users.utils import construct_user_email
@@ -99,27 +100,30 @@ class LDAPUser(_LDAPUser):
 
     def _populate_user_from_attributes(self):
         super()._populate_user_from_attributes()
-        
-        if hasattr(self._user,'_public_key') and getattr(self._user,'_public_key') != "":
-            if(validate_ssh_public_key(getattr(self._user,'_public_key'))):
+        if hasattr(self._user,'public_key') and getattr(self._user,'public_key') != "":
+            if(validate_ssh_public_key(getattr(self._user,'public_key'))):
                 signer = get_signer()
-                public_key_sign=signer.sign(self._user._public_key)
-                setattr(self._user,'_public_key',public_key_sign)
+                public_key_sign=signer.sign(self._user.public_key)
+                setattr(self._user,'public_key',public_key_sign)
             else:
-                setattr(self._user,'_public_key','')
-                logger.error("The public key obtained from LDAP is invalid and the \"_public_key\" field mapping is skipped.")
+                setattr(self._user,'public_key','')
+                logger.error("The public key obtained from LDAP is invalid and the \"public_key\" field mapping is skipped.")
         if not hasattr(self._user, 'email') or '@' not in self._user.email:
             email = '{}@{}'.format(self._user.username, settings.EMAIL_SUFFIX)
             setattr(self._user, 'email', email)
 
     def _get_or_create_user(self, force_populate=False):
         super()._get_or_create_user()
+        target_group_names = frozenset(self._get_groups().get_group_names())
+        if 'Jumpserver-admin' in target_group_names:
+            setattr(self._user,'role',RoleMixin.ROLE_ADMIN)
+        else:
+            setattr(self._user,'role',RoleMixin.ROLE_USER)
+        self._user.save()
         if not self.settings.MIRROR_GROUPS:
-          target_group_names = frozenset(self._get_groups().get_group_names())
-          new_groups = UserGroup.objects.filter(name__in=target_group_names)
-          # logger.error(new_groups)
-          if new_groups:
-              self._user.groups.set(new_groups)
+            new_groups = UserGroup.objects.filter(name__in=target_group_names)
+            if new_groups:
+                self._user.groups.set(new_groups)
 
  
     def _mirror_groups(self):
@@ -132,7 +136,6 @@ class LDAPUser(_LDAPUser):
         current_group_names = frozenset(
             self._user.groups.values_list("name", flat=True).iterator()
         )
-
         # These were normalized to sets above.
         MIRROR_GROUPS_EXCEPT = self.settings.MIRROR_GROUPS_EXCEPT
         MIRROR_GROUPS = self.settings.MIRROR_GROUPS

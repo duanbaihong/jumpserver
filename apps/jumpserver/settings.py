@@ -9,26 +9,27 @@ https://docs.djangoproject.com/en/1.10/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.10/ref/settings/
 """
- 
+
 import os
 import sys
-import socket
 
 import ldap
-# from django_auth_ldap.config import LDAPSearch, LDAPSearchUnion
 from django.urls import reverse_lazy
 
+from . import const
 from .conf import load_user_config
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_DIR = os.path.dirname(BASE_DIR)
-CONFIG = load_user_config()
+sys.path.append(PROJECT_DIR)
 
+CONFIG = load_user_config()
 LOG_DIR = os.path.join(PROJECT_DIR, 'logs')
 JUMPSERVER_LOG_FILE = os.path.join(LOG_DIR, 'jumpserver.log')
 ANSIBLE_LOG_FILE = os.path.join(LOG_DIR, 'ansible.log')
 GUNICORN_LOG_FILE = os.path.join(LOG_DIR, 'gunicorn.log')
+VERSION = const.VERSION
 
 if not os.path.isdir(LOG_DIR):
     os.makedirs(LOG_DIR)
@@ -64,6 +65,7 @@ INSTALLED_APPS = [
     'assets.apps.AssetsConfig',
     'perms.apps.PermsConfig',
     'ops.apps.OpsConfig',
+    'settings.apps.SettingsConfig',
     'common.apps.CommonConfig',
     'terminal.apps.TerminalConfig',
     'audits.apps.AuditsConfig',
@@ -99,7 +101,6 @@ if XPACK_ENABLED:
     XPACK_CONTEXT_PROCESSOR = get_xpack_context_processor()
 
 MIDDLEWARE = [
-    # 'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -107,18 +108,16 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.gzip.GZipMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'authentication.backends.openid.middleware.OpenIDAuthenticationMiddleware',  # openid
+    'authentication.backends.openid.middleware.OpenIDAuthenticationMiddleware',
     'jumpserver.middleware.TimezoneMiddleware',
     'jumpserver.middleware.DemoMiddleware',
     'jumpserver.middleware.RequestMiddleware',
     'orgs.middleware.OrgMiddleware',
-    # 'django.middleware.cache.FetchFromCacheMiddleware',
 ]
 
-ROOT_URLCONF = 'jumpserver.urls'
 
+ROOT_URLCONF = 'jumpserver.urls'
 
 TEMPLATES = [
     {
@@ -143,7 +142,6 @@ TEMPLATES = [
     },
 ]
 
-# WSGI_APPLICATION = 'jumpserver.wsgi.applications'
 WSGI_APPLICATION = 'jumpserver.wsgi.application'
 ASGI_APPLICATION = 'jumpserver.routing.application'
 
@@ -168,6 +166,7 @@ SESSION_REDIS = {
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 # Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
+
 DB_OPTIONS = {}
 DATABASES = {
     'default': {
@@ -178,7 +177,7 @@ DATABASES = {
         'USER': CONFIG.DB_USER,
         'PASSWORD': CONFIG.DB_PASSWORD,
         'ATOMIC_REQUESTS': True,
-        'OPTIONS': DB_OPTIONS,
+        'OPTIONS': DB_OPTIONS
     }
 }
 DB_CA_PATH = os.path.join(PROJECT_DIR, 'data', 'certs', 'db_ca.pem')
@@ -186,6 +185,7 @@ if CONFIG.DB_ENGINE.lower() == 'mysql':
     DB_OPTIONS['init_command'] = "SET sql_mode='STRICT_TRANS_TABLES'"
     if os.path.isfile(DB_CA_PATH):
         DB_OPTIONS['ssl'] = {'ca': DB_CA_PATH}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
@@ -250,9 +250,9 @@ LOGGING = {
             'encoding': 'utf8',
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'main',
             'maxBytes': 1024*1024*100,
             'backupCount': 7,
-            'formatter': 'main',
             'filename': ANSIBLE_LOG_FILE,
         },
         'syslog': {
@@ -281,24 +281,20 @@ LOGGING = {
             'handlers': ['console', 'file', 'syslog'],
             'level': LOG_LEVEL,
         },
-        'jumpserver.users.api': {
-            'handlers': ['console', 'file', 'syslog'],
-            'level': LOG_LEVEL,
-        },
-        'jumpserver.users.view': {
-            'handlers': ['console', 'file', 'syslog'],
-            'level': LOG_LEVEL,
-        },
         'ops.ansible_api': {
             'handlers': ['console', 'ansible_logs'],
             'level': LOG_LEVEL,
         },
         'django_auth_ldap': {
-            'handlers': ['console', 'file', 'syslog'],
+            'handlers': ['console', 'file'],
             'level': "INFO",
         },
+        'jms.audits': {
+            'handlers': ['syslog'],
+            'level': 'INFO'
+        },
         # 'django.db': {
-        #     'handlers': ['console', 'file', 'syslog'],
+        #     'handlers': ['console', 'file'],
         #     'level': 'DEBUG'
         # }
     }
@@ -306,7 +302,7 @@ LOGGING = {
 
 SYSLOG_ENABLE = False
 
-if CONFIG.SYSLOG_ADDR != '' and len(CONFIG.SYSLOG_ADDR.split.SYSLOG_ADDR.split(':')) == 2:
+if CONFIG.SYSLOG_ADDR != '' and len(CONFIG.SYSLOG_ADDR.split(':')) == 2:
     host, port = CONFIG.SYSLOG_ADDR.split(':')
     SYSLOG_ENABLE = True
     LOGGING['handlers']['syslog'].update({
@@ -314,6 +310,7 @@ if CONFIG.SYSLOG_ADDR != '' and len(CONFIG.SYSLOG_ADDR.split.SYSLOG_ADDR.split('
         'facility': CONFIG.SYSLOG_FACILITY,
         'address': (host, int(port)),
     })
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.10/topics/i18n/
 # LANGUAGE_CODE = 'en'
@@ -354,7 +351,7 @@ MEDIA_ROOT = os.path.join(PROJECT_DIR, 'data', 'media').replace('\\', '/') + '/'
 
 # Init data or generate fake data source for development
 FIXTURE_DIRS = [os.path.join(BASE_DIR, 'fixtures'), ]
- 
+
 # Email config
 EMAIL_HOST = 'smtp.jumpserver.org'
 EMAIL_PORT = 25
@@ -365,6 +362,7 @@ EMAIL_RECIPIENT = ''
 EMAIL_USE_SSL = False
 EMAIL_USE_TLS = False
 EMAIL_SUBJECT_PREFIX = '[JMS] '
+
 # Email custom content
 EMAIL_CUSTOM_USER_CREATED_SUBJECT = ''
 EMAIL_CUSTOM_USER_CREATED_HONORIFIC = ''
@@ -407,13 +405,13 @@ REST_FRAMEWORK = {
     'SEARCH_PARAM': "search",
     'DATETIME_FORMAT': '%Y-%m-%d %H:%M:%S %z',
     'DATETIME_INPUT_FORMATS': ['iso-8601', '%Y-%m-%d %H:%M:%S %z'],
-    # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     # 'PAGE_SIZE': 15
 }
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
-    'authentication.backends.pubkey.PublicKeyAuthBackend'
+    'authentication.backends.pubkey.PublicKeyAuthBackend',
 ]
 
 # Custom User Auth model
@@ -442,11 +440,6 @@ AUTH_LDAP_SEARCH_OU = 'ou=tech,dc=jumpserver,dc=org'
 AUTH_LDAP_SEARCH_FILTER = '(cn=%(user)s)'
 AUTH_LDAP_START_TLS = False
 AUTH_LDAP_USER_ATTR_MAP = {"username": "cn", "name": "sn", "email": "mail"}
-AUTH_LDAP_GROUP_SEARCH_OU = ""
-AUTH_LDAP_GROUP_SEARCH_FILTER = ""
-AUTH_LDAP_CONNECTION_OPTIONS = {
-    ldap.OPT_TIMEOUT: 30
-}
 AUTH_LDAP_GLOBAL_OPTIONS = {
     ldap.OPT_X_TLS_REQUIRE_CERT: ldap.OPT_X_TLS_NEVER,
     ldap.OPT_REFERRALS: CONFIG.AUTH_LDAP_OPTIONS_OPT_REFERRALS
@@ -454,13 +447,14 @@ AUTH_LDAP_GLOBAL_OPTIONS = {
 LDAP_CERT_FILE = os.path.join(PROJECT_DIR, "data", "certs", "ldap_ca.pem")
 if os.path.isfile(LDAP_CERT_FILE):
     AUTH_LDAP_GLOBAL_OPTIONS[ldap.OPT_X_TLS_CACERTFILE] = LDAP_CERT_FILE
-
-AUTH_LDAP_MIRROR_GROUPS = True
-AUTH_LDAP_GROUP_TYPE_STRING = ''
-AUTH_LDAP_GROUP_TYPE_STRING_ATTR = 'cn'
-
-
-
+# AUTH_LDAP_GROUP_SEARCH_OU = CONFIG.AUTH_LDAP_GROUP_SEARCH_OU
+# AUTH_LDAP_GROUP_SEARCH_FILTER = CONFIG.AUTH_LDAP_GROUP_SEARCH_FILTER
+# AUTH_LDAP_GROUP_SEARCH = LDAPSearch(
+#    AUTH_LDAP_GROUP_SEARCH_OU, ldap.SCOPE_SUBTREE, AUTH_LDAP_GROUP_SEARCH_FILTER
+# )
+AUTH_LDAP_CONNECTION_OPTIONS = {
+    ldap.OPT_TIMEOUT: 30
+}
 AUTH_LDAP_GROUP_CACHE_TIMEOUT = 1
 AUTH_LDAP_ALWAYS_UPDATE_USER = True
 AUTH_LDAP_BACKEND = 'authentication.backends.ldap.LDAPAuthorizationBackend'
@@ -482,7 +476,7 @@ AUTH_OPENID_BACKENDS = [
     'authentication.backends.openid.backends.OpenIDAuthorizationPasswordBackend',
     'authentication.backends.openid.backends.OpenIDAuthorizationCodeBackend',
 ]
- 
+
 if AUTH_OPENID:
     LOGIN_URL = reverse_lazy("authentication:openid:openid-login")
     LOGIN_COMPLETE_URL = reverse_lazy("authentication:openid:openid-login-complete")
@@ -516,15 +510,15 @@ CELERY_ACCEPT_CONTENT = ['json', 'pickle']
 CELERY_RESULT_EXPIRES = 3600
 # CELERY_WORKER_LOG_FORMAT = '%(asctime)s [%(module)s %(levelname)s] %(message)s'
 # CELERY_WORKER_LOG_FORMAT = '%(message)s'
-CELERY_WORKER_TASK_LOG_FORMAT = '%(task_id)s %(task_name)s %(message)s'
-# CELERY_WORKER_TASK_LOG_FORMAT = '%(message)s'
+# CELERY_WORKER_TASK_LOG_FORMAT = '%(task_id)s %(task_name)s %(message)s'
+CELERY_WORKER_TASK_LOG_FORMAT = '%(message)s'
 # CELERY_WORKER_LOG_FORMAT = '%(asctime)s [%(module)s %(levelname)s] %(message)s'
 CELERY_WORKER_LOG_FORMAT = '%(message)s'
 CELERY_TASK_EAGER_PROPAGATES = True
 CELERY_WORKER_REDIRECT_STDOUTS = True
 CELERY_WORKER_REDIRECT_STDOUTS_LEVEL = "INFO"
-# CELERY_WORKER_HIJACK_ROOT_LOGGER = False
-CELERY_WORKER_MAX_TASKS_PER_CHILD = 40
+# CELERY_WORKER_HIJACK_ROOT_LOGGER = True
+# CELERY_WORKER_MAX_TASKS_PER_CHILD = 40
 CELERY_TASK_SOFT_TIME_LIMIT = 3600
 
 # Cache use redis
@@ -556,12 +550,7 @@ DEFAULT_TERMINAL_COMMAND_STORAGE = {
     },
 }
 
-TERMINAL_COMMAND_STORAGE = {
-    # 'ali-es': {
-    #     'TYPE': 'elasticsearch',
-    #     'HOSTS': ['http://elastic:changeme@localhost:9200'],
-    # },
-}
+TERMINAL_COMMAND_STORAGE = CONFIG.TERMINAL_COMMAND_STORAGE
 
 DEFAULT_TERMINAL_REPLAY_STORAGE = {
     "default": {
@@ -591,7 +580,6 @@ SECURITY_PASSWORD_RULES = [
     'SECURITY_PASSWORD_NUMBER',
     'SECURITY_PASSWORD_SPECIAL_CHAR'
 ]
-
 SECURITY_MFA_VERIFY_TTL = CONFIG.SECURITY_MFA_VERIFY_TTL
 SECURITY_SERVICE_ACCOUNT_REGISTRATION = CONFIG.SECURITY_SERVICE_ACCOUNT_REGISTRATION
 TERMINAL_PASSWORD_AUTH = CONFIG.TERMINAL_PASSWORD_AUTH
@@ -614,7 +602,6 @@ BOOTSTRAP3 = {
     'success_css_class': '',
     'required_css_class': 'required',
 }
-
 TOKEN_EXPIRATION = CONFIG.TOKEN_EXPIRATION
 DISPLAY_PER_PAGE = CONFIG.DISPLAY_PER_PAGE
 DEFAULT_EXPIRED_YEARS = 70
@@ -632,6 +619,7 @@ SWAGGER_SETTINGS = {
         }
     },
 }
+
 
 # Default email suffix
 EMAIL_SUFFIX = CONFIG.EMAIL_SUFFIX

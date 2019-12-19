@@ -498,7 +498,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="""
         Jumpserver service control tools;
+
         Example: \r\n
+
         %(prog)s start all -d;
         """
     )
