@@ -45,17 +45,17 @@
                                         {% if not field.field|is_bool_field %}
                                             {% bootstrap_field field layout="horizontal" %}
                                         {% else %}
-                                            <div class="form-group">
-                                                <label for="{{ field.id_for_label }}" class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label">{{ field.label }}</label>
-                                                <div class="col-bg-8 col-md-7 col-sm-7 col-xs-8">
-                                                    <div class="checkbox">
-                                                        <label>
-                                                            {{ field }}
-                                                            <span class="" >{{ field.help_text }}</span>
-                                                        </label>
-                                                    </div>
+                                        <div class="form-group">
+                                            <label for="{{ field.id_for_label }}" class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label">{{ field.label }}</label>
+                                            <div class="col-bg-8 col-md-7 col-sm-7 col-xs-8">
+                                                <div class="checkbox">
+                                                    <label>
+                                                        {{ field }}
+                                                        <span class="" >{{ field.help_text }}</span>
+                                                    </label>
                                                 </div>
                                             </div>
+                                        </div>
                                         {% endif %}
                                     {% endfor %}
                                     <div class="hr-line-dashed"></div>

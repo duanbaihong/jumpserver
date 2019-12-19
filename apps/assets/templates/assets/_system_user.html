@@ -25,7 +25,7 @@
                                 <i class="fa fa-times"></i>
                             </a>
                         </div>
-                    </div>
+                    </div> 
                     <div class="ibox-content">
                         <form enctype="multipart/form-data" method="post" class="form-horizontal" action="" >
                             {% csrf_token %}
@@ -45,9 +45,13 @@
                             {% block auth %}
                             <div class="auto-generate">
                                 <div class="form-group">
-                                    <label for="{{ form.auto_generate_key.id_for_label }}" class="col-sm-2 control-label">{% trans 'Auto generate key' %}</label>
-                                    <div class="col-sm-8">
-                                        {{ form.auto_generate_key}}
+                                    <label for="{{ field.id_for_label }}" class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label">{% trans 'Auto generate key' %}</label>
+                                    <div class="col-bg-8 col-md-7 col-sm-7 col-xs-8">
+                                        <div class="checkbox">
+                                            <label>
+                                                {{ form.auto_generate_key}}
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -56,9 +60,13 @@
                                 {% bootstrap_field form.private_key layout="horizontal" %}
                             </div>
                             <div class="form-group">
-                                <label for="{{ form.auto_push.id_for_label }}" class="col-sm-2 control-label">{% trans 'Auto push' %}</label>
-                                <div class="col-sm-8">
-                                    {{ form.auto_push}}
+                                <label for="{{ field.id_for_label }}" class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label">{% trans 'Auto push' %}</label>
+                                <div class="col-bg-8 col-md-7 col-sm-7 col-xs-8">
+                                    <div class="checkbox">
+                                        <label>
+                                            {{ form.auto_push}}
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                             {% endblock %}
