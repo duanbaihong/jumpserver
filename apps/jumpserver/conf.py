@@ -193,8 +193,8 @@ class Config(dict):
         if self.root_path:
             filename = os.path.join(self.root_path, filename)
         try:
-            with open(filename) as f:
-                obj = yaml.load(f)
+            with open(filename, 'rt', encoding='utf8') as f:
+                obj = yaml.safe_load(f)
         except IOError as e:
             if silent and e.errno in (errno.ENOENT, errno.EISDIR):
                 return False
@@ -223,7 +223,7 @@ class Config(dict):
         mappings.append(kwargs.items())
         for mapping in mappings:
             for (key, value) in mapping:
-                if key.isupper() and value != '':
+                if key.isupper():
                     self[key] = value
         return True
 
@@ -268,21 +268,48 @@ class Config(dict):
             rv[key] = v
         return rv
 
+    def convert_type(self, k, v):
+        default_value = self.defaults.get(k)
+        if default_value is None:
+            return v
+        tp = type(default_value)
+        # 对bool特殊处理
+        if tp is bool and isinstance(v, str):
+            if v in ("true", "True", "1"):
+                return True
+            else:
+                return False
+        if tp in [list, dict] and isinstance(v, str):
+            try:
+                v = json.loads(v)
+                return v
+            except json.JSONDecodeError:
+                return v
+
+        try:
+            if tp in [list, dict]:
+                v = json.loads(v)
+            else:
+                v = tp(v)
+        except Exception:
+            pass
+        return v
+
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, dict.__repr__(self))
 
     def __getitem__(self, item):
+        # 先从设置的来
         try:
             value = super().__getitem__(item)
         except KeyError:
             value = None
         if value is not None:
             return value
+        # 其次从环境变量来
         value = os.environ.get(item, None)
         if value is not None:
-            if value.isdigit():
-                value = int(value)
-            return value
+            return self.convert_type(item, value)
         return self.defaults.get(item)
 
     def __getattr__(self, item):
@@ -290,23 +317,25 @@ class Config(dict):
 
 
 defaults = {
-    'SECRET_KEY': os.environ.get("SECRET_KEY") or '',
-    'BOOTSTRAP_TOKEN': os.environ.get("BOOTSTRAP_TOKEN") or '',
-    'DEBUG': False,
-    'SITE_URL': os.environ.get("SITE_URL") or 'http://localhost',
+    'SECRET_KEY': '',
+    'BOOTSTRAP_TOKEN': '',
+    'DEBUG': True,
+    'SITE_URL': 'http://localhost',
     'LOG_LEVEL': 'DEBUG',
     'LOG_DIR': os.path.join(PROJECT_DIR, 'logs'),
-    'DB_ENGINE': os.environ.get("DB_ENGINE") or 'mysql',
-    'DB_NAME': os.environ.get("DB_NAME") or 'jumpserver',
-    'DB_HOST': os.environ.get("DB_HOST") or '127.0.0.1',
-    'DB_PORT': os.environ.get("DB_PORT") or 3306,
-    'DB_USER': os.environ.get("DB_USER") or 'root',
-    'DB_PASSWORD': os.environ.get("DB_PASSWORD") or '',
-    'REDIS_HOST': os.environ.get("REDIS_HOST") or '127.0.0.1',
-    'REDIS_PORT': os.environ.get("REDIS_PORT") or 6379,
-    'REDIS_PASSWORD': os.environ.get("REDIS_PASSWORD") or '',
-    'REDIS_DB_CELERY': os.environ.get("REDIS_DB_CELERY") or 3,
-    'REDIS_DB_CACHE': os.environ.get("REDIS_DB_CACHE") or 4,
+    'DB_ENGINE': 'mysql',
+    'DB_NAME': 'jumpserver',
+    'DB_HOST': '127.0.0.1',
+    'DB_PORT': 3306,
+    'DB_USER': 'root',
+    'DB_PASSWORD': '',
+    'REDIS_HOST': '127.0.0.1',
+    'REDIS_PORT': 6379,
+    'REDIS_PASSWORD': '',
+    'REDIS_DB_CELERY': 3,
+    'REDIS_DB_CACHE': 4,
+    'REDIS_DB_SESSION': 5,
+    'REDIS_DB_WS': 6,
     'CAPTCHA_TEST_MODE': None,
     'TOKEN_EXPIRATION': 3600 * 24,
     'DISPLAY_PER_PAGE': 25,
@@ -316,7 +345,9 @@ defaults = {
     'SESSION_COOKIE_AGE': 3600 * 24,
     'SESSION_EXPIRE_AT_BROWSER_CLOSE': False,
     'AUTH_OPENID': False,
-    'OTP_VALID_WINDOW': 0,
+    'AUTH_OPENID_IGNORE_SSL_VERIFICATION': True,
+    'AUTH_OPENID_SHARE_SESSION': True,
+    'OTP_VALID_WINDOW': 2,
     'OTP_ISSUER_NAME': 'Jumpserver',
     'EMAIL_SUFFIX': 'jumpserver.org',
     'TERMINAL_PASSWORD_AUTH': True,
@@ -326,7 +357,11 @@ defaults = {
     'TERMINAL_ASSET_LIST_PAGE_SIZE': 'auto',
     'TERMINAL_SESSION_KEEP_DURATION': 9999,
     'TERMINAL_HOST_KEY': '',
+    'TERMINAL_TELNET_REGEX': '',
+    'TERMINAL_COMMAND_STORAGE': {},
     'SECURITY_MFA_AUTH': False,
+    'SECURITY_SERVICE_ACCOUNT_REGISTRATION': True,
+    'SECURITY_VIEW_AUTH_NEED_MFA': True,
     'SECURITY_LOGIN_LIMIT_COUNT': 7,
     'SECURITY_LOGIN_LIMIT_TIME': 30,
     'SECURITY_MAX_IDLE_TIME': 30,
@@ -336,12 +371,35 @@ defaults = {
     'SECURITY_PASSWORD_LOWER_CASE': False,
     'SECURITY_PASSWORD_NUMBER': False,
     'SECURITY_PASSWORD_SPECIAL_CHAR': False,
-    'AUTH_RADIUS': os.environ.get("AUTH_RADIUS") or False,
-    'RADIUS_SERVER': os.environ.get("RADIUS_SERVER") or 'localhost',
-    'RADIUS_PORT': os.environ.get("RADIUS_PORT") or 1812,
-    'RADIUS_SECRET': os.environ.get("RADIUS_SECRET") or '',
-    'HTTP_BIND_HOST': os.environ.get("HTTP_BIND_HOST") or '0.0.0.0',
-    'HTTP_LISTEN_PORT': os.environ.get("HTTP_LISTEN_PORT") or 8080,
+    'AUTH_RADIUS': False,
+    'RADIUS_SERVER': 'localhost',
+    'RADIUS_PORT': 1812,
+    'RADIUS_SECRET': '',
+    'RADIUS_ENCRYPT_PASSWORD': True,
+    'AUTH_LDAP_SEARCH_PAGED_SIZE': 1000,
+    'AUTH_LDAP_SYNC_IS_PERIODIC': False,
+    'AUTH_LDAP_SYNC_INTERVAL': None,
+    'AUTH_LDAP_SYNC_CRONTAB': None,
+    'AUTH_LDAP_USER_LOGIN_ONLY_IN_USERS': False,
+    'AUTH_LDAP_OPTIONS_OPT_REFERRALS': -1,
+    'HTTP_BIND_HOST': '0.0.0.0',
+    'HTTP_LISTEN_PORT': 8080,
+    'WS_LISTEN_PORT': 8070,
+    'LOGIN_LOG_KEEP_DAYS': 90,
+    'ASSETS_PERM_CACHE_TIME': 3600*24,
+    'SECURITY_MFA_VERIFY_TTL': 3600,
+    'ASSETS_PERM_CACHE_ENABLE': False,
+    'SYSLOG_ADDR': '',  # '192.168.0.1:514'
+    'SYSLOG_FACILITY': 'user',
+    'PERM_SINGLE_ASSET_TO_UNGROUP_NODE': False,
+    'WINDOWS_SSH_DEFAULT_SHELL': 'cmd',
+    'FLOWER_URL': "127.0.0.1:5555",
+    'DEFAULT_ORG_SHOW_ALL_USERS': True,
+    'PERIOD_TASK_ENABLE': True,
+    'FORCE_SCRIPT_NAME': '',
+    'LOGIN_CONFIRM_ENABLE': False,
+    'WINDOWS_SKIP_ALL_MANUAL_PASSWORD': False,
+    'OTP_IN_RADIUS': False,
 }
 
 

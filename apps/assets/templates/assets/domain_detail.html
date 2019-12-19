@@ -24,14 +24,14 @@
                                 <a class="btn btn-outline btn-default" href="{% url 'assets:domain-update' pk=object.id %}"><i class="fa fa-edit"></i>{% trans 'Update' %}</a>
                             </li>
                             <li class="pull-right">
-                                <a class="btn btn-outline btn-danger btn-del">
+                                <a class="btn btn-outline btn-danger btn-del btn-delete-domain">
                                     <i class="fa fa-trash-o"></i>{% trans 'Delete' %}
                                 </a>
                             </li>
                         </ul>
                     </div>
                     <div class="tab-content">
-                        <div class="col-sm-9" style="padding-left: 0;">
+                        <div class="col-sm-8" style="padding-left: 0;">
                             <div class="ibox float-e-margins">
                                 <div class="ibox-title">
                                     <span class="label"><b>{{ object.name }}</b></span>
@@ -93,9 +93,7 @@
 function initTable() {
     var options = {
         ele: $('#domain_list_table'),
-        autoWidth: true,
         columnDefs: [
-            {targets:0, width: "30"},
             {targets: 1, createdCell: function (td, cellData, rowData) {
                 var detail_btn = '<a href="{% url "assets:domain-detail" pk=DEFAULT_PK %}">' + cellData + '</a>';
                 $(td).html(detail_btn.replace('{{ DEFAULT_PK }}', rowData.id));
@@ -129,6 +127,15 @@ $(document).ready(function(){
     setTimeout( function () {
         $data_table.ajax.reload();
     }, 3000);
-});
+})
+.on('click', '.btn-delete-domain', function () {
+    var $this = $(this);
+    var name = "{{ object.name }}";
+    var uid = "{{ object.id }}";
+    var the_url = '{% url "api-assets:domain-detail" pk=DEFAULT_PK %}'.replace('{{ DEFAULT_PK }}', uid);
+    var redirect_url = "{% url 'assets:domain-list' %}";
+    objectDelete($this, name, the_url, redirect_url);
+})
+;
 </script>
 {% endblock %}

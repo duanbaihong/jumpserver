@@ -45,8 +45,8 @@ def after_app_shutdown_periodic_tasks(sender=None, **kwargs):
 def add_celery_logger_handler(sender=None, logger=None, loglevel=None, format=None, **kwargs):
     if not logger:
         return
-    handler = CeleryTaskFileHandler()
-    handler.setLevel(loglevel)
+    task_handler = CeleryTaskFileHandler()
+    task_handler.setLevel(loglevel)
     formatter = logging.Formatter(format)
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+    task_handler.setFormatter(formatter)
+    logger.addHandler(task_handler)

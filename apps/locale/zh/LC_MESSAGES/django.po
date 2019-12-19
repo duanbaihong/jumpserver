@@ -17,6 +17,60 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: applications/const.py:17
+msgid "Browser"
+msgstr "浏览器"
+
+#: applications/const.py:23
+msgid "Database tools"
+msgstr "数据库工具"
+
+#: applications/const.py:29
+msgid "Virtualization tools"
+msgstr "虚拟化工具"
+
+#: applications/const.py:34
+msgid "Custom"
+msgstr "自定义"
+
+#: applications/forms/remote_app.py:21
+msgid "Target URL"
+msgstr "目标URL"
+
+#: applications/forms/remote_app.py:24 applications/forms/remote_app.py:53
+#: applications/forms/remote_app.py:69
+msgid "Login username"
+msgstr "登录账号"
+
+#: applications/forms/remote_app.py:28 applications/forms/remote_app.py:57
+#: applications/forms/remote_app.py:73
+msgid "Login password"
+msgstr "登录密码"
+
+#: applications/forms/remote_app.py:34
+msgid "Database IP"
+msgstr "数据库IP"
+
+#: applications/forms/remote_app.py:37
+msgid "Database name"
+msgstr "数据库名"
+
+#: applications/forms/remote_app.py:40
+msgid "Database username"
+msgstr "数据库账号"
+
+#: applications/forms/remote_app.py:44
+msgid "Database password"
+msgstr "数据库密码"
+
+#: applications/forms/remote_app.py:50 applications/forms/remote_app.py:66
+msgid "Target address"
+msgstr "目标地址"
+
+#: applications/forms/remote_app.py:63
+msgid "Operating parameter"
+msgstr "运行参数"
+
 #: assets/api/node.py:281
 msgid "Update node asset hardware information: {}"
 msgstr "更新节点资产硬件信息: {}"

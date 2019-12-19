@@ -6,6 +6,7 @@ from rest_framework import viewsets, generics
 from rest_framework.views import Response
 
 from common.permissions import IsOrgAdmin
+from common.serializers import CeleryTaskSerializer
 from orgs.utils import current_org
 from ..models import Task, AdHoc, AdHocRunHistory
 from ..serializers import TaskSerializer, AdHocSerializer, \
@@ -19,6 +20,8 @@ __all__ = [
 
 class TaskViewSet(viewsets.ModelViewSet):
     queryset = Task.objects.all()
+    filter_fields = ("name",)
+    search_fields = filter_fields
     serializer_class = TaskSerializer
     permission_classes = (IsOrgAdmin,)
 
@@ -33,7 +36,7 @@ class TaskViewSet(viewsets.ModelViewSet):
 
 class TaskRun(generics.RetrieveAPIView):
     queryset = Task.objects.all()
-    # serializer_class = TaskViewSet
+    serializer_class = CeleryTaskSerializer
     permission_classes = (IsOrgAdmin,)
 
     def retrieve(self, request, *args, **kwargs):

@@ -13,7 +13,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django_celery_beat.models import PeriodicTask
 
-from common.utils import get_signer, get_logger
+from common.utils import get_signer, get_logger, lazyproperty
 from orgs.utils import set_to_root_org
 from ..celery.utils import delete_celery_periodic_task, \
     create_or_update_celery_periodic_tasks, \
@@ -42,7 +42,8 @@ class Task(models.Model):
     is_deleted = models.BooleanField(default=False)
     comment = models.TextField(blank=True, verbose_name=_("Comment"))
     created_by = models.CharField(max_length=128, blank=True, default='')
-    date_created = models.DateTimeField(auto_now_add=True, db_index=True)
+    date_created = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name=_("Date created"))
+    date_updated = models.DateTimeField(auto_now=True, verbose_name=_("Date updated"))
     __latest_adhoc = None
     _ignore_auto_created_by = True
 
@@ -51,16 +52,39 @@ class Task(models.Model):
         return str(self.id).split('-')[-1]
 
     @property
-    def latest_adhoc(self):
-        if not self.__latest_adhoc:
-            self.__latest_adhoc = self.get_latest_adhoc()
-        return self.__latest_adhoc
-
-    @latest_adhoc.setter
-    def latest_adhoc(self, item):
-        self.__latest_adhoc = item
+    def versions(self):
+        return self.adhoc.all().count()
 
     @property
+    def is_success(self):
+        if self.latest_history:
+            return self.latest_history.is_success
+        else:
+            return False
+
+    @property
+    def timedelta(self):
+        if self.latest_history:
+            return self.latest_history.timedelta
+        else:
+            return 0
+
+    @property
+    def date_start(self):
+        if self.latest_history:
+            return self.latest_history.date_start
+        else:
+            return None
+
+    @property
+    def assets_amount(self):
+        return self.latest_adhoc.hosts.count()
+
+    @lazyproperty
+    def latest_adhoc(self):
+        return self.get_latest_adhoc()
+
+    @lazyproperty
     def latest_history(self):
         try:
             return self.history.all().latest()
@@ -139,6 +163,7 @@ class Task(models.Model):
     class Meta:
         db_table = 'ops_task'
         unique_together = ('name', 'created_by')
+        ordering = ('-date_updated',)
         get_latest_by = 'date_created'
 
 
@@ -149,7 +174,7 @@ class AdHoc(models.Model):
     _options: ansible options, more see ops.ansible.runner.Options
     _hosts: ["hostname1", "hostname2"], hostname must be unique key of cmdb
     run_as_admin: if true, then need get every host admin user run it, because every host may be have different admin user, so we choise host level
-    run_as: if not run as admin, it run it as a system/common user from cmdb
+    run_as: username(Add the uniform AssetUserManager <AssetUserManager> and change it to username)
     _become: May be using become [sudo, su] options. {method: "sudo", user: "user", pass: "pass"]
     pattern: Even if we set _hosts, We only use that to make inventory, We also can set `patter` to run task on match hosts
     """
@@ -161,9 +186,9 @@ class AdHoc(models.Model):
     _hosts = models.TextField(blank=True, verbose_name=_('Hosts'))  # ['hostname1', 'hostname2']
     hosts = models.ManyToManyField('assets.Asset', verbose_name=_("Host"))
     run_as_admin = models.BooleanField(default=False, verbose_name=_('Run as admin'))
-    run_as = models.ForeignKey('assets.SystemUser', null=True, on_delete=models.CASCADE)
-    _become = models.CharField(max_length=1024, default='', verbose_name=_("Become"))
-    created_by = models.CharField(max_length=64, default='', null=True, verbose_name=_('Create by'))
+    run_as = models.CharField(max_length=64, default='', blank=True, null=True, verbose_name=_('Username'))
+    _become = models.CharField(max_length=1024, default='', blank=True, verbose_name=_("Become"))
+    created_by = models.CharField(max_length=64, default='', blank=True, null=True, verbose_name=_('Create by'))
     date_created = models.DateTimeField(auto_now_add=True, db_index=True)
 
     @property
@@ -217,29 +242,42 @@ class AdHoc(models.Model):
         except AttributeError:
             hid = str(uuid.uuid4())
         history = AdHocRunHistory(id=hid, adhoc=self, task=self.task)
+        history.save()
         time_start = time.time()
+        date_start = timezone.now()
+        is_success = False
+        summary = {}
+        raw = ''
+
         try:
-            date_start = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            print(_("{} Start task: {}").format(date_start, self.task.name))
+            date_start_s = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print(_("{} Start task: {}").format(date_start_s, self.task.name))
             raw, summary = self._run_only()
-            date_end = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            print(_("{} Task finish").format(date_end))
-            history.is_finished = True
-            if summary.get('dark'):
-                history.is_success = False
-            else:
-                history.is_success = True
-            history.result = raw
-            history.summary = summary
-            return raw, summary
+            is_success = summary.get('success', False)
         except Exception as e:
-            return {}, {"dark": {"all": str(e)}, "contacted": []}
+            logger.error(e, exc_info=True)
+            raw = {"dark": {"all": str(e)}, "contacted": []}
         finally:
-            history.date_finished = timezone.now()
-            history.timedelta = time.time() - time_start
-            history.save()
+            date_end = timezone.now()
+            date_end_s = date_end.strftime('%Y-%m-%d %H:%M:%S')
+            print(_("{} Task finish").format(date_end_s))
+            print('.\n\n.')
+            try:
+                summary_text = json.dumps(summary)
+            except json.JSONDecodeError:
+                summary_text = '{}'
+            AdHocRunHistory.objects.filter(id=history.id).update(
+                date_start=date_start,
+                is_finished=True,
+                is_success=is_success,
+                date_finished=timezone.now(),
+                timedelta=time.time() - time_start,
+                _summary=summary_text
+            )
+            return raw, summary
 
     def _run_only(self):
+        Task.objects.filter(id=self.task.id).update(date_updated=timezone.now())
         runner = AdHocRunner(self.inventory, options=self.options)
         try:
             result = runner.run(
@@ -288,10 +326,9 @@ class AdHoc(models.Model):
         except AdHocRunHistory.DoesNotExist:
             return None
 
-    def save(self, force_insert=False, force_update=False, using=None,
-             update_fields=None):
-        super().save(force_insert=force_insert, force_update=force_update,
-                     using=using, update_fields=update_fields)
+    def save(self, **kwargs):
+        instance = super().save(**kwargs)
+        return instance
 
     def __str__(self):
         return "{} of {}".format(self.task.name, self.short_id)
@@ -360,7 +397,10 @@ class AdHocRunHistory(models.Model):
 
     @summary.setter
     def summary(self, item):
-        self._summary = json.dumps(item)
+        try:
+            self._summary = json.dumps(item)
+        except json.JSONDecodeError:
+            self._summary = json.dumps({})
 
     @property
     def success_hosts(self):

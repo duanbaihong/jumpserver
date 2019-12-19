@@ -1,9 +1,12 @@
 # coding: utf-8
 import os
 import subprocess
+import datetime
+import time
 
 from django.conf import settings
 from celery import shared_task, subtask
+from celery.exceptions import SoftTimeLimitExceeded
 from django.utils import timezone
 
 from common.utils import get_logger, get_object_or_none
@@ -21,7 +24,7 @@ def rerun_task():
     pass
 
 
-@shared_task
+@shared_task(queue="ansible")
 def run_ansible_task(tid, callback=None, **kwargs):
     """
     :param tid: is the tasks serialized data
@@ -38,10 +41,20 @@ def run_ansible_task(tid, callback=None, **kwargs):
         logger.error("No task found")
 
 
-@shared_task
+@shared_task(soft_time_limit=60, queue="ansible")
 def run_command_execution(cid, **kwargs):
     execution = get_object_or_none(CommandExecution, id=cid)
-    return execution.run()
+    if execution:
+        try:
+            os.environ.update({
+                "TERM_ROWS": kwargs.get("rows", ""),
+                "TERM_COLS": kwargs.get("cols", ""),
+            })
+            execution.run()
+        except SoftTimeLimitExceeded:
+            logger.error("Run time out")
+    else:
+        logger.error("Not found the execution id: {}".format(cid))
 
 
 @shared_task
@@ -78,6 +91,8 @@ def clean_celery_tasks_period():
         settings.CELERY_LOG_DIR, expire_days
     )
     subprocess.call(command, shell=True)
+    command = "echo > {}".format(os.path.join(settings.LOG_DIR, 'celery.log'))
+    subprocess.call(command, shell=True)
 
 
 @shared_task
@@ -88,7 +103,7 @@ def create_or_update_registered_periodic_tasks():
         create_or_update_celery_periodic_tasks(task)
 
 
-@shared_task
+@shared_task(queue="ansible")
 def hello(name, callback=None):
     import time
     time.sleep(10)
@@ -96,6 +111,32 @@ def hello(name, callback=None):
 
 
 @shared_task
+# @after_app_shutdown_clean_periodic
+# @register_as_period_task(interval=30)
+def hello123():
+    return None
+
+
+@shared_task
 def hello_callback(result):
     print(result)
     print("Hello callback")
+
+
+@shared_task
+def add(a, b):
+    time.sleep(5)
+    return a + b
+
+
+@shared_task
+def add_m(x):
+    from celery import chain
+    a = range(x)
+    b = [a[i:i + 10] for i in range(0, len(a), 10)]
+    s = list()
+    s.append(add.s(b[0], b[1]))
+    for i in b[1:]:
+        s.append(add.s(i))
+    res = chain(*tuple(s))()
+    return res

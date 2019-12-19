@@ -1,29 +1,14 @@
+# -*- coding: utf-8 -*-
+#
+
+from rest_framework_bulk.serializers import BulkListSerializer
 from rest_framework import serializers
+from .mixins import BulkListSerializerMixin
 
 
-class MailTestSerializer(serializers.Serializer):
-    EMAIL_HOST = serializers.CharField(max_length=1024, required=True)
-    EMAIL_PORT = serializers.IntegerField(default=25)
-    EMAIL_HOST_USER = serializers.CharField(max_length=1024)
-    EMAIL_HOST_PASSWORD = serializers.CharField()
-    EMAIL_USE_SSL = serializers.BooleanField(default=False)
-    EMAIL_USE_TLS = serializers.BooleanField(default=False)
+class AdaptedBulkListSerializer(BulkListSerializerMixin, BulkListSerializer):
+    pass
 
 
-class LDAPTestSerializer(serializers.Serializer):
-    AUTH_LDAP_SERVER_URI = serializers.CharField(max_length=1024)
-    AUTH_LDAP_BIND_DN = serializers.CharField(max_length=1024)
-    AUTH_LDAP_BIND_PASSWORD = serializers.CharField()
-    AUTH_LDAP_SEARCH_OU = serializers.CharField()
-    AUTH_LDAP_SEARCH_FILTER = serializers.CharField()
-    AUTH_LDAP_USER_ATTR_MAP = serializers.CharField()
-    AUTH_LDAP_START_TLS = serializers.BooleanField(required=False)
-    
-class LDAPTestUserSerializer(serializers.Serializer):
-    AUTH_LDAP_USERNAME_PASSWORD = serializers.CharField(max_length=1024)
-    AUTH_LDAP_USER_NAME = serializers.CharField(max_length=1024)
-        
-class OutputSerializer(serializers.Serializer):
-    output = serializers.CharField()
-    is_end = serializers.BooleanField()
-    mark = serializers.CharField()
+class CeleryTaskSerializer(serializers.Serializer):
+    task = serializers.CharField(read_only=True)

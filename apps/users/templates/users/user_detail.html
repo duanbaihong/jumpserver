@@ -22,11 +22,11 @@
                                 <a href="{% url 'users:user-granted-asset' pk=user_object.id %}" class="text-center"><i class="fa fa-cubes"></i> {% trans 'Asset granted' %}</a>
                             </li>
                             <li class="pull-right">
-                                <a class="btn btn-outline btn-default" href="{% url 'users:user-update' pk=user_object.id %}"><i class="fa fa-edit"></i>{% trans 'Update' %}</a>
+                                <a class="btn btn-outline {% if can_update %} btn-default {% else %} disabled {% endif %}" href="{% url 'users:user-update' pk=user_object.id %}"><i class="fa fa-edit"></i>{% trans 'Update' %}</a>
                             </li>
 
                             <li class="pull-right">
-                                <a class="btn btn-outline {% if request.user != user_object and user_object.username != "admin" %} btn-danger btn-delete-user {% else %} disabled {% endif %}">
+                                <a class="btn btn-outline {% if can_delete %} btn-danger btn-delete-user {% else %} disabled {% endif %}">
                                     <i class="fa fa-trash-o"></i>{% trans 'Delete' %}
                                 </a>
                             </li>
@@ -85,14 +85,14 @@
                                         {% endif %}
                                         <tr>
                                             <td>{% trans 'Role' %}:</td>
-                                            <td><b>{{ user_object.get_role_display }}</b></td>
+                                            <td><b>{{ user_object.role_display }}</b></td>
                                         </tr>
                                         <tr>
                                             <td>{% trans 'MFA certification' %}:</td>
                                             <td><b>
-                                                {% if user_object.otp_force_enabled %}
+                                                {% if user_object.mfa_force_enabled %}
                                                     {% trans 'Force enabled' %}
-                                                {% elif  user_object.otp_enabled%}
+                                                {% elif  user_object.mfa_enabled%}
                                                     {% trans 'Enabled' %}
                                                 {% else %}
                                                     {% trans 'Disabled' %}
@@ -119,10 +119,12 @@
                                             <td>{% trans 'Last login' %}:</td>
                                             <td><b>{{ user_object.last_login|date:"Y-m-j H:i:s" }}</b></td>
                                         </tr>
+                                        {% if user_object.can_update_password %}
                                         <tr>
                                             <td>{% trans 'Last password updated' %}:</td>
                                             <td><b>{{ user_object.date_password_last_updated|date:"Y-m-j H:i:s" }}</b></td>
                                         </tr>
+                                        {% endif %}
                                         <tr>
                                             <td>{% trans 'Comment' %}:</td>
                                             <td><b>{{ user_object.comment }}</b></td>
@@ -155,19 +157,21 @@
                                             </span></td>
                                         </tr>
                                         <tr>
-                                          <td>{% trans 'Force enabled MFA' %}:</td>
-                                            <td><span class="pull-right">
+                                            <td>{% trans 'Force enabled MFA' %}:</td>
+                                            <td>
+                                                <span class="pull-right">
                                                 <div class="switch">
                                                     <div class="onoffswitch">
-                                                        <input type="checkbox" class="onoffswitch-checkbox" {% if user_object.otp_force_enabled %} checked {% endif %}
-                                                               id="force_enable_otp">
-                                                        <label class="onoffswitch-label" for="force_enable_otp">
+                                                        <input type="checkbox" class="onoffswitch-checkbox" {% if user_object.mfa_force_enabled %} checked {% endif %}
+                                                               id="force_enable_mfa">
+                                                        <label class="onoffswitch-label" for="force_enable_mfa">
                                                             <span class="onoffswitch-inner"></span>
                                                             <span class="onoffswitch-switch"></span>
                                                         </label>
                                                     </div>
                                                 </div>
-                                            </span></td>
+                                                </span>
+                                            </td>
                                         </tr>
                                         <tr>
                                             <td>{% trans 'Reset MFA' %}:</td>
@@ -187,6 +191,7 @@
                                             </td>
                                         </tr>
                                         {% endif %}
+                                        {% if user_object.can_update_ssh_key %}
                                         <tr>
                                             <td>{% trans 'Send reset ssh key mail' %}:</td>
                                             <td>
@@ -195,6 +200,7 @@
                                                 </span>
                                             </td>
                                         </tr>
+                                        {% endif %}
                                         <tr style="{% if not unblock %}display:none{% endif %}">
                                             <td>{% trans 'Unblock user' %}</td>
                                             <td>
@@ -207,45 +213,89 @@
                                     </table>
                                 </div>
                             </div>
+                            {% if request.user.can_admin_current_org %}
 
-                            <div class="panel panel-info">
-                                <div class="panel-heading">
-                                    <i class="fa fa-info-circle"></i> {% trans 'User group' %}
-                                </div>
-                                <div class="panel-body">
-                                    <table class="table group_edit">
-                                        <tbody>
-                                        <form>
-                                            <tr>
-                                                <td colspan="2" class="no-borders">
-                                                    <select data-placeholder="{% trans 'Join user groups' %}" id="groups_selected" class="select2" style="width: 100%" multiple="" tabindex="4">
-                                                        {% for group in groups %}
-                                                        <option value="{{ group.id }}" id="opt_{{ group.id }}" >{{ group.name }}</option>
-                                                        {% endfor %}
-                                                    </select>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td colspan="2" class="no-borders">
-                                                    <button type="button" class="btn btn-info btn-small" id="btn_join_group">{% trans 'Join' %}</button>
-                                                </td>
-                                            </tr>
-                                        </form>
+                                {% if user_object.can_user_current_org or user_object.can_admin_current_org %}
+                                    <div class="panel panel-info">
+                                        <div class="panel-heading">
+                                            <i class="fa fa-info-circle"></i> {% trans 'User group' %}
+                                        </div>
+                                        <div class="panel-body">
+                                            <table class="table group_edit">
+                                                <tbody>
+                                                <form>
+                                                    <tr>
+                                                        <td colspan="2" class="no-borders">
+                                                            <select data-placeholder="{% trans 'Join user groups' %}" id="groups_selected" class="select2" style="width: 100%" multiple="" tabindex="4">
+                                                                {% for group in groups %}
+                                                                    <option value="{{ group.id }}" id="opt_{{ group.id }}" >{{ group.name }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td colspan="2" class="no-borders">
+                                                            <button type="button" class="btn btn-info btn-small" id="btn_join_group">{% trans 'Join' %}</button>
+                                                        </td>
+                                                    </tr>
+                                                </form>
 
-                                        {% for group in user_object.groups.all %}
-                                        <tr>
-                                          <td >
-                                              <b class="bdg_group" data-gid={{ group.id }}>{{ group.name }}</b>
-                                          </td>
-                                          <td>
-                                              <button class="btn btn-danger pull-right btn-xs btn_leave_group" type="button"><i class="fa fa-minus"></i></button>
-                                          </td>
-                                        </tr>
-                                        {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+                                                {% for group in user_object.groups.all %}
+                                                    <tr>
+                                                        <td >
+                                                            <b class="bdg_group" data-gid={{ group.id }}>{{ group.name }}</b>
+                                                        </td>
+                                                        <td>
+                                                            <button class="btn btn-danger pull-right btn-xs btn_leave_group" type="button"><i class="fa fa-minus"></i></button>
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                                {% if LICENSE_VALID and LOGIN_CONFIRM_ENABLE %}
+                                    <div class="panel panel-warning">
+                                        <div class="panel-heading">
+                                            <i class="fa fa-info-circle"></i> {% trans 'Login confirm' %}
+                                        </div>
+                                        <div class="panel-body">
+                                            <table class="table">
+                                                <tbody>
+                                                <form>
+                                                    <tr>
+                                                        <td colspan="2" class="no-borders">
+                                                            <select data-placeholder="{% trans 'Reviewers' %}" id="id_assignees" class="users-select2" style="width: 100%" multiple="" tabindex="4">
+                                                            </select>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td colspan="2" class="no-borders">
+                                                            <button type="button" class="btn btn-warning btn-small" id="btn_reviewer_confirm">{% trans 'Confirm' %}</button>
+                                                        </td>
+                                                    </tr>
+                                                </form>
+                                                {% if user_object.get_login_confirm_setting %}
+                                                    {% for u in user_object.login_confirm_setting.reviewers.all %}
+                                                        <tr>
+                                                            <td >
+                                                                <b class="bdg_reviewer">{{ u }}</b>
+                                                            </td>
+                                                            <td>
+                                                                <button class="btn btn-danger pull-right btn-xs btn-leave-reviewer" data-uid={{ u.id }} type="button"><i class="fa fa-minus"></i></button>
+                                                            </td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                {% endif %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -257,6 +307,7 @@
 {% block custom_foot_js %}
 <script>
 jumpserver.nodes_selected = {};
+var usersSelect2;
 
 function updateUserGroups(groups) {
     var the_url = "{% url 'api-users:user-update-group' pk=user_object.id %}";
@@ -280,11 +331,24 @@ function updateUserGroups(groups) {
         // clear jumpserver.groups_selected
         jumpserver.nodes_selected = {};
     };
-    APIUpdateAttr({
+    requestApi({
         url: the_url,
         body: JSON.stringify(body),
         success: success
     });
+}
+
+function updateUserLoginReviewer(reviewers) {
+    var url = "{% url 'api-auth:login-confirm-setting-update' user_id=user_object.id %}";
+    var data = {reviewers: reviewers};
+    requestApi({
+        url: url,
+        data: JSON.stringify(data),
+        method: 'PATCH',
+        success: function () {
+            window.location.reload();
+        }
+    })
 }
 
 $(document).ready(function() {
@@ -297,6 +361,7 @@ $(document).ready(function() {
             var data = evt.params.data;
             delete jumpserver.nodes_selected[data.id];
         });
+    usersSelect2 = usersSelect2Init('.users-select2')
 })
 .on('click', '#is_active', function() {
     var the_url = "{% url 'api-users:user-detail' pk=user_object.id %}";
@@ -305,13 +370,13 @@ $(document).ready(function() {
         'is_active': checked
     };
     var success = '{% trans "Update successfully!" %}';
-    APIUpdateAttr({
+    requestApi({
         url: the_url,
         body: JSON.stringify(body),
         success_message: success
     });
 })
-.on('click', '#force_enable_otp', function() {
+.on('click', '#force_enable_mfa', function() {
     {% if request.user == user_object %}
         toastr.error("{% trans 'Goto profile page enable MFA' %}");
         return;
@@ -319,20 +384,20 @@ $(document).ready(function() {
 
     var the_url = "{% url 'api-users:user-detail' pk=user_object.id %}";
     var checked = $(this).prop('checked');
-    var otp_level;
+    var mfa_level;
     var otp_secret_key;
     if(checked){
-        otp_level = 2
+        mfa_level = 2
     }else{
-        otp_level = 0;
+        mfa_level = 0;
         otp_secret_key = '';
     }
     var body = {
-        'otp_level': otp_level,
+        'mfa_level': mfa_level,
         'otp_secret_key': otp_secret_key
     };
     var success = '{% trans "Update successfully!" %}';
-    APIUpdateAttr({
+    requestApi({
         url: the_url,
         body: JSON.stringify(body),
         success_message: success
@@ -372,7 +437,7 @@ $(document).ready(function() {
             var msg = "{% trans "An e-mail has been sent to the user`s mailbox." %}";
             swal("{% trans 'Reset password' %}", msg, "success");
         };
-        APIUpdateAttr({
+        requestApi({
             url: the_url,
             body: JSON.stringify(body),
             success: success
@@ -398,7 +463,7 @@ $(document).ready(function() {
             var msg = "{% trans 'The reset-ssh-public-key E-mail has been sent successfully. Please inform the user to update his new ssh public key.' %}";
             swal("{% trans 'Reset SSH public key' %}", msg, "success");
         };
-        APIUpdateAttr({
+        requestApi({
             url: the_url,
             body: body,
             success: success
@@ -441,7 +506,7 @@ $(document).ready(function() {
             }
         );
     };
-    APIUpdateAttr({ url: the_url, body: JSON.stringify(body), success: success, error: fail});
+    requestApi({ url: the_url, body: JSON.stringify(body), success: success, error: fail});
 }).on('click', '.btn-delete-user', function () {
     var $this = $(this);
     var name = "{{ user_object.name }}";
@@ -466,7 +531,7 @@ $(document).ready(function() {
                 }
             );
         };
-        APIUpdateAttr({
+        requestApi({
             url: the_url,
             body: JSON.stringify(body),
             success: success
@@ -485,11 +550,37 @@ $(document).ready(function() {
         doReset();
     });
 }).on('click', '#btn-reset-mfa', function () {
-    APIUpdateAttr({
+    requestApi({
         url: "{% url 'api-users:user-reset-otp' pk=user_object.id %}",
         method: "GET",
         success_message: "{% trans 'Reset user MFA success' %}"
     })
+}).on('click', '.btn-leave-reviewer', function () {
+    var reviewersId = [];
+    var removeReviewerId = $(this).data('uid');
+    $('.btn-leave-reviewer').each(function (i, v) {
+        var reviewerId = $(v).data('uid');
+        if (reviewerId !== removeReviewerId) {
+            reviewersId.push(reviewerId);
+        }
+    });
+    updateUserLoginReviewer(reviewersId);
+}).on('click', '#btn_reviewer_confirm', function () {
+    var reviewersId = [];
+    $('.btn-leave-reviewer').each(function (i, v) {
+        var reviewerId = $(v).data('uid');
+        reviewersId.push(reviewerId);
+    });
+    var selectedId = usersSelect2.val();
+    if (selectedId.length === 0) {
+        return
+    }
+    selectedId.forEach(function (i) {
+        if (reviewersId.indexOf(i) === -1) {
+            reviewersId.push(i)
+        }
+    });
+    updateUserLoginReviewer(reviewersId);
 })
 </script>
 {% endblock %}

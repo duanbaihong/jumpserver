@@ -14,23 +14,25 @@
 # limitations under the License.
 
 from django.shortcuts import get_object_or_404
-from rest_framework import generics
+from django.conf import settings
 from rest_framework.response import Response
-from rest_framework_bulk import BulkModelViewSet
-from rest_framework.pagination import LimitOffsetPagination
 
+from common.serializers import CeleryTaskSerializer
 from common.utils import get_logger
-from common.permissions import IsOrgAdmin, IsOrgAdminOrAppUser
+from common.permissions import IsOrgAdmin, IsOrgAdminOrAppUser, IsAppUser
+from orgs.mixins.api import OrgBulkModelViewSet
+from orgs.mixins import generics
 from ..models import SystemUser, Asset
 from .. import serializers
-from ..tasks import push_system_user_to_assets_manual, \
-    test_system_user_connectivity_manual, push_system_user_a_asset_manual, \
-    test_system_user_connectivity_a_asset
+from ..tasks import (
+    push_system_user_to_assets_manual, test_system_user_connectivity_manual,
+    push_system_user_a_asset_manual, test_system_user_connectivity_a_asset,
+)
 
 
 logger = get_logger(__file__)
 __all__ = [
-    'SystemUserViewSet', 'SystemUserAuthInfoApi',
+    'SystemUserViewSet', 'SystemUserAuthInfoApi', 'SystemUserAssetAuthInfoApi',
     'SystemUserPushApi', 'SystemUserTestConnectiveApi',
     'SystemUserAssetsListView', 'SystemUserPushToAssetApi',
     'SystemUserTestAssetConnectivityApi', 'SystemUserCommandFilterRuleListApi',
@@ -38,27 +40,22 @@ __all__ = [
 ]
 
 
-class SystemUserViewSet(BulkModelViewSet):
+class SystemUserViewSet(OrgBulkModelViewSet):
     """
     System user api set, for add,delete,update,list,retrieve resource
     """
+    model = SystemUser
     filter_fields = ("name", "username")
     search_fields = filter_fields
-    queryset = SystemUser.objects.all()
     serializer_class = serializers.SystemUserSerializer
     permission_classes = (IsOrgAdminOrAppUser,)
-    pagination_class = LimitOffsetPagination
-
-    def get_queryset(self):
-        queryset = super().get_queryset().all()
-        return queryset
 
 
 class SystemUserAuthInfoApi(generics.RetrieveUpdateDestroyAPIView):
     """
     Get system user auth info
     """
-    queryset = SystemUser.objects.all()
+    model = SystemUser
     permission_classes = (IsOrgAdminOrAppUser,)
     serializer_class = serializers.SystemUserAuthSerializer
 
@@ -68,12 +65,29 @@ class SystemUserAuthInfoApi(generics.RetrieveUpdateDestroyAPIView):
         return Response(status=204)
 
 
+class SystemUserAssetAuthInfoApi(generics.RetrieveAPIView):
+    """
+    Get system user with asset auth info
+    """
+    model = SystemUser
+    permission_classes = (IsAppUser,)
+    serializer_class = serializers.SystemUserAuthSerializer
+
+    def get_object(self):
+        instance = super().get_object()
+        aid = self.kwargs.get('aid')
+        asset = get_object_or_404(Asset, pk=aid)
+        instance.load_specific_asset_auth(asset)
+        return instance
+
+
 class SystemUserPushApi(generics.RetrieveAPIView):
     """
     Push system user to cluster assets api
     """
-    queryset = SystemUser.objects.all()
+    model = SystemUser
     permission_classes = (IsOrgAdmin,)
+    serializer_class = CeleryTaskSerializer
 
     def retrieve(self, request, *args, **kwargs):
         system_user = self.get_object()
@@ -88,8 +102,9 @@ class SystemUserTestConnectiveApi(generics.RetrieveAPIView):
     """
     Push system user to cluster assets api
     """
-    queryset = SystemUser.objects.all()
+    model = SystemUser
     permission_classes = (IsOrgAdmin,)
+    serializer_class = CeleryTaskSerializer
 
     def retrieve(self, request, *args, **kwargs):
         system_user = self.get_object()
@@ -100,7 +115,6 @@ class SystemUserTestConnectiveApi(generics.RetrieveAPIView):
 class SystemUserAssetsListView(generics.ListAPIView):
     permission_classes = (IsOrgAdmin,)
     serializer_class = serializers.AssetSimpleSerializer
-    pagination_class = LimitOffsetPagination
     filter_fields = ("hostname", "ip")
     http_method_names = ['get']
     search_fields = filter_fields
@@ -115,7 +129,7 @@ class SystemUserAssetsListView(generics.ListAPIView):
 
 
 class SystemUserPushToAssetApi(generics.RetrieveAPIView):
-    queryset = SystemUser.objects.all()
+    model = SystemUser
     permission_classes = (IsOrgAdmin,)
     serializer_class = serializers.TaskIDSerializer
 
@@ -128,7 +142,7 @@ class SystemUserPushToAssetApi(generics.RetrieveAPIView):
 
 
 class SystemUserTestAssetConnectivityApi(generics.RetrieveAPIView):
-    queryset = SystemUser.objects.all()
+    model = SystemUser
     permission_classes = (IsOrgAdmin,)
     serializer_class = serializers.TaskIDSerializer
 

@@ -5,11 +5,11 @@
 <html>
 	<head>
 		<meta charset="UTF-8">
-		<title> Jumpserver </title>
-        <link rel="shortcut icon" href="{% static "img/facio.ico" %}" type="image/x-icon">
+		<title> {{ JMS_TITLE }} </title>
+        <link rel="shortcut icon" href="{{ FAVICON_URL }}" type="image/x-icon">
 		<link rel="stylesheet" href="{% static 'fonts/font_otp/iconfont.css' %}" />
 		<link rel="stylesheet" href="{% static 'css/otp.css' %}" />
-        <script src="{% static 'js/jquery-2.1.1.js' %}"></script>
+        <script src="{% static 'js/jquery-3.1.1.min.js' %}"></script>
         <script src="{% static "js/plugins/qrcode/qrcode.min.js" %}"></script>
         <script type="text/javascript" src="{% url 'javascript-catalog' %}"></script>
 	</head>
@@ -19,9 +19,9 @@
 		 <header>
 		 	<div class="logo">
 		 		<a href="{% url 'index' %}">
-		 			<img src="{% static 'img/logo.png' %}" alt="" width="50px" height="50px"/>
+		 			<img src="{{ LOGO_URL }}" alt="" width="50px" height="50px"/>
 		 		</a>
-		 		<a href="{% url 'index' %}">Jumpserver</a>
+		 		<a href="{% url 'index' %}">{{ JMS_TITLE }}</a>
 		 	</div>
 		 	<div>
                 <a href="{% url 'index' %}">{% trans 'Home page' %}</a>
@@ -42,8 +42,7 @@
             </div>
 		 	<div >
                 <div class="verify">{% trans 'Security token validation' %}&nbsp;&nbsp;{% trans 'Account' %}&nbsp;<span>{{ user.username }}</span>&nbsp;&nbsp;{% trans 'Follow these steps to complete the binding operation' %}</div>
-		 		<div class="line"></div>
-
+                <hr style="width: 500px; margin: auto; margin-top: 10px;">
                 {% block content %}
                 {% endblock %}
 		 	</div>

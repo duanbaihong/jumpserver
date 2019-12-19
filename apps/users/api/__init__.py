@@ -2,5 +2,5 @@
 #
 
 from .user import *
-from .auth import *
 from .group import *
+from .relation import *

@@ -1,38 +1,14 @@
 # -*- coding: utf-8 -*-
 #
 
-UPDATE_ASSETS_HARDWARE_TASKS = [
-   {
-       'name': "setup",
-       'action': {
-           'module': 'setup'
-       }
-   }
-]
+from django.utils.translation import ugettext_lazy as _
 
-ADMIN_USER_CONN_CACHE_KEY = "ADMIN_USER_CONN_{}"
-TEST_ADMIN_USER_CONN_TASKS = [
-    {
-        "name": "ping",
-        "action": {
-            "module": "ping",
-        }
-    }
-]
 
-ASSET_ADMIN_CONN_CACHE_KEY = "ASSET_ADMIN_USER_CONN_{}"
+GENERAL_FORBIDDEN_SPECIAL_CHARACTERS_HELP_TEXT = _(
+    'Cannot contain special characters: [ {} ]'
+).format(" ".join(['/', '\\']))
 
-SYSTEM_USER_CONN_CACHE_KEY = "SYSTEM_USER_CONN_{}"
-TEST_SYSTEM_USER_CONN_TASKS = [
-   {
-       "name": "ping",
-       "action": {
-           "module": "ping",
-       }
-   }
-]
+GENERAL_FORBIDDEN_SPECIAL_CHARACTERS_PATTERN = r"[/\\]"
 
-TASK_OPTIONS = {
-    'timeout': 10,
-    'forks': 10,
-}
+GENERAL_FORBIDDEN_SPECIAL_CHARACTERS_ERROR_MSG = \
+    _("* The contains characters that are not allowed")

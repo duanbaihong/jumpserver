@@ -2,6 +2,7 @@
 
 import datetime
 import json
+import os
 from collections import defaultdict
 
 from ansible import constants as C
@@ -41,7 +42,11 @@ class CallbackMixin:
         super().__init__()
         if display:
             self._display = display
+
+        cols = os.environ.get("TERM_COLS", None)
         self._display.columns = 79
+        if cols and cols.isdigit():
+            self._display.columns = int(cols) - 1
 
     def display(self, msg):
         self._display.display(msg)
@@ -122,6 +127,9 @@ class AdHocResultCallback(CallbackMixin, CallbackModule, CMDCallBackModule):
         pass
 
     def display_ok_hosts(self):
+        pass
+
+    def display_failed_stderr(self):
         pass
 
 

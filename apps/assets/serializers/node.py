@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 from rest_framework import serializers
-from rest_framework_bulk.serializers import BulkListSerializer
+from django.utils.translation import ugettext as _
 
-from common.mixins import BulkSerializerMixin
+from orgs.mixins.serializers import BulkOrgResourceModelSerializer
 from ..models import Asset, Node
-from .asset import AssetGrantedSerializer
 
 
 __all__ = [
@@ -13,31 +12,36 @@ __all__ = [
 ]
 
 
-class NodeSerializer(serializers.ModelSerializer):
-    assets_amount = serializers.IntegerField(read_only=True)
+class NodeSerializer(BulkOrgResourceModelSerializer):
+    name = serializers.ReadOnlyField(source='value')
+    value = serializers.CharField(
+        required=False, allow_blank=True, allow_null=True, label=_("value")
+    )
 
     class Meta:
         model = Node
-        fields = [
-            'id', 'key', 'value', 'assets_amount', 'org_id',
-        ]
-        read_only_fields = [
-            'id', 'key', 'assets_amount', 'org_id',
-        ]
+        only_fields = ['id', 'key', 'value', 'org_id']
+        fields = only_fields + ['name', 'full_value']
+        read_only_fields = ['key', 'org_id']
 
     def validate_value(self, data):
-        instance = self.instance if self.instance else Node.root()
-        children = instance.parent.get_children().exclude(key=instance.key)
-        values = [child.value for child in children]
-        if data in values:
+        if self.instance:
+            instance = self.instance
+            siblings = instance.get_siblings()
+        else:
+            instance = Node.org_root()
+            siblings = instance.get_children()
+        if siblings.filter(value=data):
             raise serializers.ValidationError(
-                'The same level node name cannot be the same'
+                _('The same level node name cannot be the same')
             )
         return data
 
 
-class NodeAssetsSerializer(serializers.ModelSerializer):
-    assets = serializers.PrimaryKeyRelatedField(many=True, queryset=Asset.objects.all())
+class NodeAssetsSerializer(BulkOrgResourceModelSerializer):
+    assets = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Asset.objects
+    )
 
     class Meta:
         model = Node

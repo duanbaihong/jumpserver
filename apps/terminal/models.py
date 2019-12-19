@@ -4,6 +4,7 @@ import os
 import uuid
 
 from django.db import models
+from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 from django.conf import settings
@@ -11,7 +12,7 @@ from django.core.files.storage import default_storage
 from django.core.cache import cache
 
 from users.models import User
-from orgs.mixins import OrgModelMixin
+from orgs.mixins.models import OrgModelMixin
 from common.utils import get_command_storage_setting, get_replay_storage_setting
 from .backends import get_multi_command_storage
 from .backends.command.models import AbstractSessionCommand
@@ -147,7 +148,8 @@ class Session(OrgModelMixin):
     PROTOCOL_CHOICES = (
         ('ssh', 'ssh'),
         ('rdp', 'rdp'),
-        ('vnc', 'vnc')
+        ('vnc', 'vnc'),
+        ('telnet', 'telnet'),
     )
 
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
@@ -167,6 +169,7 @@ class Session(OrgModelMixin):
 
     upload_to = 'replay'
     ACTIVE_CACHE_KEY_PREFIX = 'SESSION_ACTIVE_{}'
+    _DATE_START_FIRST_HAS_REPLAY_RDP_SESSION = None
 
     def get_rel_replay_path(self, version=2):
         """
@@ -187,6 +190,26 @@ class Session(OrgModelMixin):
         else:
             local_path = rel_path
         return local_path
+
+    @property
+    def _date_start_first_has_replay_rdp_session(self):
+        if self.__class__._DATE_START_FIRST_HAS_REPLAY_RDP_SESSION is None:
+            instance = self.__class__.objects.filter(
+                protocol='rdp', has_replay=True
+            ).order_by('date_start').first()
+            if not instance:
+                date_start = timezone.now() - timezone.timedelta(days=365)
+            else:
+                date_start = instance.date_start
+            self.__class__._DATE_START_FIRST_HAS_REPLAY_RDP_SESSION = date_start
+        return self.__class__._DATE_START_FIRST_HAS_REPLAY_RDP_SESSION
+
+    def can_replay(self):
+        if self.has_replay:
+            return True
+        if self.date_start < self._date_start_first_has_replay_rdp_session:
+            return True
+        return False
 
     def save_to_storage(self, f):
         local_path = self.get_local_path()
@@ -216,6 +239,10 @@ class Session(OrgModelMixin):
         command_store = get_multi_command_storage()
         return command_store.count(session=str(self.id))
 
+    @property
+    def login_from_display(self):
+        return self.get_login_from_display()
+
     class Meta:
         db_table = "terminal_session"
         ordering = ["-date_start"]
@@ -241,7 +268,16 @@ class Task(models.Model):
         db_table = "terminal_task"
 
 
+class CommandManager(models.Manager):
+    def bulk_create(self, objs, **kwargs):
+        resp = super().bulk_create(objs, **kwargs)
+        for i in objs:
+            post_save.send(i.__class__, instance=i, created=True)
+        return resp
+
+
 class Command(AbstractSessionCommand):
+    objects = CommandManager()
 
     class Meta:
         db_table = "terminal_command"

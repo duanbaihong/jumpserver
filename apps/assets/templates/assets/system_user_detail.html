@@ -33,7 +33,7 @@
                         </ul>
                     </div>
                     <div class="tab-content">
-                        <div class="col-bg-8 col-md-7 col-sm-7 col-xs-8" style="padding-left: 0;">
+                        <div class="col-sm-8" style="padding-left: 0;">
                             <div class="ibox float-e-margins">
                                 <div class="ibox-title">
                                     <span class="label"><b>{{ system_user.name }}</b></span>
@@ -118,7 +118,7 @@
                                 <div class="panel-body">
                                     <table class="table">
                                         <tbody>
-                                        <tr class="only-ssh">
+                                        <tr class="only-ssh-rdp">
                                             <td width="50%">{% trans 'Auto push' %}:</td>
                                             <td>
                                                 <span class="pull-right">
@@ -135,7 +135,7 @@
                                             </td>
                                         </tr>
                                         {% if system_user.auto_push %}
-                                        <tr class="only-ssh">
+                                        <tr class="only-ssh-rdp">
                                             <td width="50%">{% trans 'Push system user now' %}:</td>
                                             <td>
                                                 <span style="float: right">
@@ -144,7 +144,7 @@
                                             </td>
                                         </tr>
                                         {% endif %}
-                                        <tr class="only-ssh">
+                                        <tr>
                                             <td width="50%">{% trans 'Test assets connective' %}:</td>
                                             <td>
                                                 <span style="float: right">
@@ -212,15 +212,19 @@ function updateCommandFilters(command_filters) {
     var success = function(data) {
         location.reload();
     };
-    APIUpdateAttr({
+    requestApi({
         url: the_url,
         body: JSON.stringify(body),
         success: success
     });
 }
 $(document).ready(function () {
-    if($('#id_protocol_type').text() === 'rdp'){
-        $('.only-ssh').addClass('hidden')
+    var protocol = $('#id_protocol_type').text();
+    if(protocol !== 'ssh'){
+        $('.only-ssh').addClass("hidden")
+    }
+    if(["ssh", "rdp"].indexOf(protocol) === -1){
+        $('.only-ssh-rdp').addClass('hidden');
     }
     $(".panel-body .table tr:visible:first").addClass('no-borders-tr');
     $('.select2').select2()
@@ -231,7 +235,7 @@ $(document).ready(function () {
     var body = {
         'auto_push': checked
     };
-    APIUpdateAttr({
+    requestApi({
         url: the_url,
         body: JSON.stringify(body)
     });
@@ -247,10 +251,9 @@ $(document).ready(function () {
     var the_url = "{% url 'api-assets:system-user-push' pk=system_user.id %}";
     var success = function (data) {
         var task_id = data.task;
-        var url = '{% url "ops:celery-task-log" pk=DEFAULT_PK %}'.replace("{{ DEFAULT_PK }}", task_id);
-        window.open(url, '', 'width=800,height=600,left=400,top=400')
+        showCeleryTaskLog(task_id);
     };
-    APIUpdateAttr({
+    requestApi({
         url: the_url,
         method: 'GET',
         success: success,
@@ -261,10 +264,9 @@ $(document).ready(function () {
     var the_url = "{% url 'api-assets:system-user-connective' pk=system_user.id %}";
     var success = function (data) {
         var task_id = data.task;
-        var url = '{% url "ops:celery-task-log" pk=DEFAULT_PK %}'.replace("{{ DEFAULT_PK }}", task_id);
-        window.open(url, '', 'width=800,height=600')
+        showCeleryTaskLog(task_id);
     };
-    APIUpdateAttr({
+    requestApi({
         url: the_url,
         method: 'GET',
         success: success,

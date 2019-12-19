@@ -19,7 +19,9 @@
                             <li class="active">
                                 <a href="{% url 'assets:asset-detail' pk=asset.id %}" class="text-center"><i class="fa fa-laptop"></i> {% trans 'Asset detail' %} </a>
                             </li>
-                            {% if user.is_superuser %}
+                            <li>
+                                <a href="{% url 'assets:asset-user-list' pk=asset.id %}" class="text-center"><i class="fa fa-bar-chart-o"></i> {% trans 'Asset user list' %} </a>
+                            </li>
                             <li class="pull-right">
                                 <a class="btn btn-outline btn-default" href="{% url 'assets:asset-update' pk=asset.id %}"><i class="fa fa-edit"></i>{% trans 'Update' %}</a>
                             </li>
@@ -28,11 +30,10 @@
                                     <i class="fa fa-trash-o"></i>{% trans 'Delete' %}
                                 </a>
                             </li>
-                            {% endif %}
                         </ul>
                     </div>
                     <div class="tab-content">
-                        <div class="col-sm-7" style="padding-left: 0">
+                        <div class="col-sm-8" style="padding-left: 0">
                             <div class="ibox float-e-margins">
                                 <div class="ibox-title">
                                     <span class="label"><b>{{ asset.hostname }}</b></span>
@@ -66,12 +67,8 @@
                                             <td><b>{{ asset.public_ip|default:"" }}</b></td>
                                         </tr>
                                         <tr>
-                                            <td>{% trans 'Port' %}:</td>
-                                            <td><b>{{ asset.port }}</b></td>
-                                        </tr>
-                                        <tr>
-                                            <td>{% trans 'Protocol' %}:</td>
-                                            <td><b>{{ asset.protocol }}</b></td>
+                                            <td>{% trans 'Protocol' %}</td>
+                                            <td><b>{{ asset.protocols }}</b></td>
                                         </tr>
                                         <tr>
                                             <td>{% trans 'Admin user' %}:</td>
@@ -91,7 +88,7 @@
                                         </tr>
                                         <tr>
                                             <td>{% trans 'CPU' %}:</td>
-                                            <td><b>{{ asset.cpu_model|default:"" }} {{ asset.cpu_count|default:"" }}*{{ asset.cpu_cores|default:"" }}</b></td>
+                                            <td><b>{{ asset.cpu_info }}</b></td>
                                         </tr>
                                         <tr>
                                             <td>{% trans 'Memory' %}:</td>
@@ -139,7 +136,7 @@
                             </div>
                         </div>
                         {% if user.is_superuser or user.is_org_admin %}
-                        <div class="col-sm-5" style="padding-left: 0;padding-right: 0">
+                        <div class="col-sm-4" style="padding-left: 0;padding-right: 0">
                             <div class="panel panel-primary">
                                 <div class="panel-heading">
                                     <i class="fa fa-info-circle"></i> {% trans 'Quick modify' %}
@@ -163,7 +160,7 @@
                                               </span>
                                           </td>
                                         </tr>
-                                        {% if asset.protocol == 'ssh' %}
+                                        {% if asset.is_support_ansible %}
                                         <tr>
                                             <td>{% trans 'Refresh hardware' %}:</td>
                                             <td>
@@ -196,10 +193,7 @@
                                         <form>
                                             <tr>
                                                 <td colspan="2" class="no-borders">
-                                                    <select data-placeholder="{% trans 'Nodes' %}" id="groups_selected" class="select2 groups" style="width: 100%" multiple="" tabindex="4">
-                                                        {% for node in nodes_remain %}
-                                                        <option value="{{ node.id }}" id="opt_{{ node.id }}" >{{ node }}</option>
-                                                        {% endfor %}
+                                                    <select data-placeholder="{% trans 'Nodes' %}" id="groups_selected" class="nodes-select2 groups" style="width: 100%" multiple="" tabindex="4">
                                                     </select>
                                                 </td>
                                             </tr>
@@ -212,7 +206,7 @@
 
                                         {% for node in asset.nodes.all %}
                                         <tr>
-                                          <td ><b class="bdg_node" data-gid={{ node.id }}>{{ node }}</b></td>
+                                          <td ><b class="bdg_node" data-gid={{ node.id }}>{{ node.full_value }}</b></td>
                                           <td>
                                               <button class="btn btn-danger pull-right btn-xs btn-leave-node" type="button"><i class="fa fa-minus"></i></button>
                                           </td>
@@ -268,7 +262,7 @@ function updateAssetNodes(nodes) {
         // clear jumpserver.groups_selected
         jumpserver.nodes_selected = {};
     };
-    APIUpdateAttr({
+    requestApi({
         url: the_url,
         body: JSON.stringify(body),
         success: success
@@ -280,10 +274,9 @@ function refreshAssetHardware() {
     var success = function(data) {
         console.log(data);
         var task_id = data.task;
-        var url = '{% url "ops:celery-task-log" pk=DEFAULT_PK %}'.replace("{{ DEFAULT_PK }}", task_id);
-        window.open(url, '', 'width=800,height=600')
+        showCeleryTaskLog(task_id);
     };
-    APIUpdateAttr({
+    requestApi({
         url: the_url,
         success: success,
         method: 'GET'
@@ -292,7 +285,8 @@ function refreshAssetHardware() {
 
 
 $(document).ready(function () {
-    $('.select2.groups').select2().on('select2:select', function(evt) {
+    nodesSelect2Init(".nodes-select2")
+    .on('select2:select', function(evt) {
         var data = evt.params.data;
         jumpserver.nodes_selected[data.id] = data.text;
     }).on('select2:unselect', function(evt) {
@@ -307,7 +301,7 @@ $(document).ready(function () {
     };
     var success = '{% trans "Update successfully!" %}';
     var status = $(".ibox-content > table > tbody > tr:nth-child(13) > td:last >b").text();
-    APIUpdateAttr({
+    requestApi({
         url: the_url,
         body: JSON.stringify(body),
         success_message: success
@@ -357,11 +351,10 @@ $(document).ready(function () {
 
     var success = function(data) {
         var task_id = data.task;
-        var url = '{% url "ops:celery-task-log" pk=DEFAULT_PK %}'.replace("{{ DEFAULT_PK }}", task_id);
-        window.open(url, '', 'width=800,height=600')
+        showCeleryTaskLog(task_id);
     };
 
-    APIUpdateAttr({
+    requestApi({
         url: the_url,
         method: 'GET',
         success: success
