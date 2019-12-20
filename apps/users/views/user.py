@@ -232,6 +232,7 @@ class UserProfileView(PermissionsMixin, TemplateView):
             'mfa_setting': mfa_setting if mfa_setting is not None else False,
         }
         kwargs.update(context)
+        # logger.info(self.request.user.public_key)
         return super().get_context_data(**kwargs)
 
 

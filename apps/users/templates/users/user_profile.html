@@ -71,12 +71,12 @@
                                                     <table>
                                                         <tr>
                                                             <td>
-                                                                {{ user.public_key_obj.comment }}
+                                                                {{ user.public_key_obj.comment }}-({{ user.public_key_obj.bits }}bits)
                                                             </td>
                                                         </tr>
                                                         <tr>
                                                             <td>
-                                                                {{ user.public_key_obj.hash_md5 }}
+                                                                {{ user.public_key_obj.hash_sha256 }}
                                                             </td>
                                                         </tr>
                                                     </table>
@@ -221,7 +221,7 @@
         </div>
     </div>
 {% endblock %}
-{% block custom_foot_js %}
+<!-- {% block custom_foot_js %}
 <script>
 $(document).ready(function () {
 })
@@ -230,4 +230,4 @@ $(document).ready(function () {
     window.open(the_url, "_blank")
 })
 </script>
-{% endblock %}
+{% endblock %} -->

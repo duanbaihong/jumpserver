@@ -69,13 +69,12 @@ class AuthMixin:
         if self.public_key:
             return True
         return False
-
+ 
     @property
     def public_key_obj(self):
         class PubKey(object):
             def __getattr__(self, item):
                 return ''
-
         if self.public_key:
             import sshpubkeys
             try:
