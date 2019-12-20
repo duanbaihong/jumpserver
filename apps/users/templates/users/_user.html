@@ -22,13 +22,13 @@
         {% block password %}{% endblock %}
         {% bootstrap_field form.mfa_level layout="horizontal" %}
         {% bootstrap_field form.source layout="horizontal" %}
-
+ 
         <div class="hr-line-dashed"></div>
         <h3>{% trans 'Security and Role' %}</h3>
         {% bootstrap_field form.role layout="horizontal" %}
         <div class="form-group {% if form.date_expired.errors %} has-error {% endif %}" id="date_5">
-            <label for="{{ form.date_expired.id_for_label }}" class="col-sm-2 control-label">{{ form.date_expired.label }}</label>
-            <div class="col-sm-9">
+            <label for="{{ form.date_expired.id_for_label }}" class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label">{{ form.date_expired.label }}</label>
+            <div class="col-bg-8 col-md-7 col-sm-7 col-xs-8">
                 <div class="input-group date">
                     <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
                     {% if form.errors %}
@@ -76,7 +76,7 @@
 
         $(document).ready(function () {
             $('.select2').select2();
-            initDateRangePicker('#id_date_expired');
+            initDateRangePicker('#id_date_expired',{drops:"up"});
             var mfa_radio = $('#id_mfa_level');
             mfa_radio.addClass("form-inline");
             mfa_radio.children().css("margin-right","15px");

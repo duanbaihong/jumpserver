@@ -8234,6 +8234,7 @@ body.md-skin {
 .wrapper.wrapper-content.animated.fadeInRight{
   flex: 1 1 0%;
   overflow: auto;
+  margin-bottom: 39px;
 }
 .profile-element {
   height: 65px;

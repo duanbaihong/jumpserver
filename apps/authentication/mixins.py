@@ -2,6 +2,7 @@
 #
 import time
 from django.conf import settings
+from django.contrib.auth import authenticate
 
 from common.utils import get_object_or_none, get_request_ip, get_logger
 from users.models import User
@@ -74,6 +75,7 @@ class AuthMixin:
         request.session['auth_password'] = 1
         request.session['user_id'] = str(user.id)
         auth_backend = getattr(user, 'backend', 'django.contrib.auth.backends.ModelBackend')
+        # auth_backend = getattr(user, 'backend', 'authentication.backends.ldap.LDAPAuthorizationBackend')
         request.session['auth_backend'] = auth_backend
         return user
 

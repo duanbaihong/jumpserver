@@ -219,7 +219,7 @@ class UserGrantedAssetView(PermissionsMixin, DetailView):
         }
         kwargs.update(context)
         return super().get_context_data(**kwargs)
-
+ 
 
 class UserProfileView(PermissionsMixin, TemplateView):
     template_name = 'users/user_profile.html'

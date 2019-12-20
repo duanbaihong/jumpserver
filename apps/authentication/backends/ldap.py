@@ -101,13 +101,16 @@ class LDAPUser(_LDAPUser):
     def _populate_user_from_attributes(self):
         super()._populate_user_from_attributes()
         if hasattr(self._user,'public_key') and getattr(self._user,'public_key') != "":
+            logger.info(getattr(self._user,'public_key').encode('UTF-8'))
             if(validate_ssh_public_key(getattr(self._user,'public_key'))):
                 signer = get_signer()
-                public_key_sign=signer.sign(self._user.public_key)
+                public_key_sign=signer.sign(self._user.public_key.encode('UTF-8'))
+                logger.info(public_key_sign)
                 setattr(self._user,'public_key',public_key_sign)
             else:
                 setattr(self._user,'public_key','')
                 logger.error("The public key obtained from LDAP is invalid and the \"public_key\" field mapping is skipped.")
+
         if not hasattr(self._user, 'email') or '@' not in self._user.email:
             email = '{}@{}'.format(self._user.username, settings.EMAIL_SUFFIX)
             setattr(self._user, 'email', email)

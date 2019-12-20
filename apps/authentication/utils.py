@@ -23,7 +23,10 @@ def check_user_valid(**kwargs):
         user = get_object_or_none(User, email=email)
     else:
         user = None
-
+        
+    if username and (password or public_key):
+        user = authenticate(request, username=username,
+                            password=password, public_key=public_key)
     if user is None:
         return None, errors.reason_user_not_exist
     elif user.is_expired:
@@ -32,10 +35,7 @@ def check_user_valid(**kwargs):
         return None, errors.reason_user_inactive
     elif user.password_has_expired:
         return None, errors.reason_password_expired
-
-    if password or public_key:
-        user = authenticate(request, username=username,
-                            password=password, public_key=public_key)
+    else:
         if user:
             return user, ''
     return None, errors.reason_password_failed

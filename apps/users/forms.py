@@ -244,7 +244,7 @@ class UserPasswordForm(forms.Form):
         password = self.cleaned_data['new_password']
         self.instance.reset_password(new_password=password)
         return self.instance
-
+ 
 
 class UserPublicKeyForm(forms.Form):
     pubkey_description = _('Automatically configure and download the SSH key')
