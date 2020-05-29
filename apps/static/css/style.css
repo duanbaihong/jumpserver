@@ -8223,13 +8223,16 @@ body.md-skin {
 }
 .navbar-default.navbar-static-side{
   height: 100%;
+  transition: all .3s ease-out;
 }
+
 #page-wrapper{
   height: 100%;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   padding: 0px;
+  transition: all .3s ease-out;
 }
 .wrapper.wrapper-content.animated.fadeInRight{
   flex: 1 1 0%;
