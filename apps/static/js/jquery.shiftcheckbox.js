@@ -1,4 +1,196 @@
-(function(c){c.fn.shiftcheckbox=function(d){d=c.extend({checkboxSelector:null,selectAll:null,onChange:null,ignoreClick:null},d);"function"!=typeof d.onChange&&(d.onChange=function(c){});c.fn.scb_changeChecked=function(c,d){this.prop("checked",d);c.onChange.call(this,d);return this};var a;d.selectAll&&(a=c(d.selectAll))&&!a.length&&(a=!1);if(a){var b=a.filter(":checkbox").add(a.find(":checkbox"));a=a.not(":checkbox");var h=a.filter(function(){return!c(this).find(b).length});a=a.filter(function(){return!!c(this).find(b).length}).each(function(){c(this).data("childCheckbox",
-c(this).find(b)[0])})}if(d.checkboxSelector){var k=this.filter(function(){return!!c(this).find(d.checkboxSelector).filter(":checkbox").length}).each(function(){c(this).data("childCheckbox",c(this).find(d.checkboxSelector).filter(":checkbox")[0])}).add(a);var g=k.map(function(){return c(this).data("childCheckbox")})}else g=this.filter(":checkbox");b&&!b.length?b=!1:g=g.add(b);h&&!h.length&&(h=!1);k&&k.not(a);var e=g.not(b);if(e.length){var m=-1,p=function(a){var l=!!c(this).prop("checked"),f=e.index(this);
-if(0>f)b.filter(this).length&&g.scb_changeChecked(d,l);else{if(a.shiftKey&&-1!=m){a=f>m?1:-1;for(var n=m;n!=f;n+=a)e.eq(n).scb_changeChecked(d,l)}b&&(l&&!e.not(":checked").length?b.scb_changeChecked(d,!0):l||b.scb_changeChecked(d,!1));m=f}};if(b)b.prop("checked",!e.not(":checked").length).filter(function(){return!k.find(this).length}).on("click.shiftcheckbox",p);if(h)h.on("click.shiftcheckbox",function(){var c=b?!!b.eq(0).prop("checked"):!!e.eq(0).prop("checked");g.scb_changeChecked(d,!c)});if(d.checkboxSelector)k.on("click.shiftcheckbox",
-function(a){if(!c(a.target).closest(d.ignoreClick).length){var b=c(c(this).data("childCheckbox"));b.not(a.target).each(function(){var a=!b.prop("checked");c(this).scb_changeChecked(d,a)});b[0].focus();p.call(b,a);var e=c(a.target).closest("label"),f=e.attr("for");if(f&&f==b.attr("id"))if(e.find(b).length){if(b[0]!=a.target)return!1}else return!1}}).on("mousedown.shiftcheckbox",function(a){if(a.shiftKey)return!1});else e.on("click.shiftcheckbox",p);return this}}})(jQuery);
+/* ShiftCheckbox jQuery plugin
+ *
+ * Copyright (C) 2011-2012 James Nylen
+ *
+ * Released under MIT license
+ * For details see:
+ * https://github.com/nylen/shiftcheckbox
+ *
+ * Requires jQuery v1.7 or higher.
+ */
+
+(function($) {
+  var ns = '.shiftcheckbox';
+
+  $.fn.shiftcheckbox = function(opts) {
+    opts = $.extend({
+      checkboxSelector : null,
+      selectAll        : null,
+      onChange         : null,
+      ignoreClick      : null
+    }, opts);
+
+    if (typeof opts.onChange != 'function') {
+      opts.onChange = function(checked) { };
+    }
+
+    $.fn.scb_changeChecked = function(opts, checked) {
+      this.prop('checked', checked);
+      opts.onChange.call(this, checked);
+      return this;
+    }
+
+    var $containers,
+        $checkboxes,
+        $containersSelectAll,
+        $checkboxesSelectAll,
+        $otherSelectAll,
+        $containersAll,
+        $checkboxesAll;
+
+    if (opts.selectAll) {
+      // We need to set up a "select all" control
+      $containersSelectAll = $(opts.selectAll);
+      if ($containersSelectAll && !$containersSelectAll.length) {
+        $containersSelectAll = false;
+      }
+    }
+
+    if ($containersSelectAll) {
+      $checkboxesSelectAll = $containersSelectAll
+        .filter(':checkbox')
+        .add($containersSelectAll.find(':checkbox'));
+
+      $containersSelectAll = $containersSelectAll.not(':checkbox');
+      $otherSelectAll = $containersSelectAll.filter(function() {
+        return !$(this).find($checkboxesSelectAll).length;
+      });
+      $containersSelectAll = $containersSelectAll.filter(function() {
+        return !!$(this).find($checkboxesSelectAll).length;
+      }).each(function() {
+        $(this).data('childCheckbox', $(this).find($checkboxesSelectAll)[0]);
+      });
+    }
+
+    if (opts.checkboxSelector) {
+
+      // checkboxSelector means that the elements we need to attach handlers to
+      // ($containers) are not actually checkboxes but contain them instead
+
+      $containersAll = this.filter(function() {
+        return !!$(this).find(opts.checkboxSelector).filter(':checkbox').length;
+      }).each(function() {
+        $(this).data('childCheckbox', $(this).find(opts.checkboxSelector).filter(':checkbox')[0]);
+      }).add($containersSelectAll);
+
+      $checkboxesAll = $containersAll.map(function() {
+        return $(this).data('childCheckbox');
+      });
+
+    } else {
+
+      $checkboxesAll = this.filter(':checkbox');
+
+    }
+
+    if ($checkboxesSelectAll && !$checkboxesSelectAll.length) {
+      $checkboxesSelectAll = false;
+    } else {
+      $checkboxesAll = $checkboxesAll.add($checkboxesSelectAll);
+    }
+
+    if ($otherSelectAll && !$otherSelectAll.length) {
+      $otherSelectAll = false;
+    }
+
+    if ($containersAll) {
+      $containers = $containersAll.not($containersSelectAll);
+    }
+    $checkboxes = $checkboxesAll.not($checkboxesSelectAll);
+
+    if (!$checkboxes.length) {
+      return;
+    }
+
+    var lastIndex = -1;
+
+    var checkboxClicked = function(e) {
+      var checked = !!$(this).prop('checked');
+
+      var curIndex = $checkboxes.index(this);
+      if (curIndex < 0) {
+        if ($checkboxesSelectAll.filter(this).length) {
+          $checkboxesAll.scb_changeChecked(opts, checked);
+        }
+        return;
+      }
+
+      if (e.shiftKey && lastIndex != -1) {
+        var di = (curIndex > lastIndex ? 1 : -1);
+        for (var i = lastIndex; i != curIndex; i += di) {
+          $checkboxes.eq(i).scb_changeChecked(opts, checked);
+        }
+      }
+
+      if ($checkboxesSelectAll) {
+        if (checked && !$checkboxes.not(':checked').length) {
+          $checkboxesSelectAll.scb_changeChecked(opts, true);
+        } else if (!checked) {
+          $checkboxesSelectAll.scb_changeChecked(opts, false);
+        }
+      }
+
+      lastIndex = curIndex;
+    };
+
+    if ($checkboxesSelectAll) {
+      $checkboxesSelectAll
+        .prop('checked', !$checkboxes.not(':checked').length)
+        .filter(function() {
+          return !$containersAll.find(this).length;
+        }).on('click' + ns, checkboxClicked);
+    }
+
+    if ($otherSelectAll) {
+      $otherSelectAll.on('click' + ns, function() {
+        var checked;
+        if ($checkboxesSelectAll) {
+          checked = !!$checkboxesSelectAll.eq(0).prop('checked');
+        } else {
+          checked = !!$checkboxes.eq(0).prop('checked');
+        }
+        $checkboxesAll.scb_changeChecked(opts, !checked);
+      });
+    }
+
+    if (opts.checkboxSelector) {
+      $containersAll.on('click' + ns, function(e) {
+        if ($(e.target).closest(opts.ignoreClick).length) {
+          return;
+        }
+        var $checkbox = $($(this).data('childCheckbox'));
+        $checkbox.not(e.target).each(function() {
+          var checked = !$checkbox.prop('checked');
+          $(this).scb_changeChecked(opts, checked);
+        });
+
+        $checkbox[0].focus();
+        checkboxClicked.call($checkbox, e);
+
+        // If the user clicked on a label inside the row that points to the
+        // current row's checkbox, cancel the event.
+        var $label = $(e.target).closest('label');
+        var labelFor = $label.attr('for');
+        if (labelFor && labelFor == $checkbox.attr('id')) {
+          if ($label.find($checkbox).length) {
+            // Special case:  The label contains the checkbox.
+            if ($checkbox[0] != e.target) {
+              return false;
+            }
+          } else {
+            return false;
+          }
+        }
+      }).on('mousedown' + ns, function(e) {
+        if (e.shiftKey) {
+          // Prevent selecting text by Shift+click
+          return false;
+        }
+      });
+    } else {
+      $checkboxes.on('click' + ns, checkboxClicked);
+    }
+
+    return this;
+  };
+})(jQuery);

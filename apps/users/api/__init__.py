@@ -2,5 +2,6 @@
 #
 
 from .user import *
-from .auth import *
 from .group import *
+from .profile import *
+from .relation import *

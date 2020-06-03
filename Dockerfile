@@ -1,17 +1,20 @@
-FROM alpine
+FROM alpine:3.10.2
 MAINTAINER dbh888 <duanbaihong@qq.com>
 
-ENV LANG=zh_CN.UTF-8 LC_ALL=zh_CN.UTF-8 VERSION=1.4.6 EXT_PACKAGE="python3 py3-pip dumb-init" EXT_TMP_PACKAGE="make gcc g++"
-WORKDIR /opt/jumpserver
+ENV LANG=zh_CN.UTF-8 LC_ALL=zh_CN.UTF-8 VERSION=1.4.6 \
+	EXT_PACKAGE="python3 py3-pip dumb-init sshpass libldap krb5-libs mariadb-connector-c libjpeg tiff cyrus-sasl freetype liblcms libwebp tcl xorgproto libuuid fontconfig libblkid libfdisk libmount libxft libxrender libxcb libxdmcp libxau" \
+	EXT_TMP_PACKAGE="make gcc g++ postgresql-dev mariadb-dev sqlite-dev libffi-dev tiff-dev jpeg-dev zlib-dev freetype-dev lcms-dev libwebp-dev tcl-dev tk-dev python3-dev libressl-dev openldap-dev cyrus-sasl-dev krb5-dev"
+
 COPY . /opt/jumpserver
 # ADD https://github.com/jumpserver/jumpserver/archive/${VERSION}.tar.gz /opt/jumpserver
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories \
-    # tar xvf ${VERSION}.tar.gz \
-    # && mv jumpserver-${VERSION}/* . \
-    # && rm -rf jumpserver-${VERSION} \
-    && apk add --no-cache $(cat requirements/alpine_requirements.txt) ${EXT_PACKAGE} ${EXT_TMP_PACKAGE} \
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories \
+    && mkdir -p /root/.config/pip/ \
+    && echo -e "[global]\nindex-url = http://mirrors.aliyun.com/pypi/simple\n[install]\ntrusted-host=mirrors.aliyun.com" >$HOME/.config/pip/pip.conf \
+    && apk add --no-cache $(cat /opt/jumpserver/requirements/alpine_requirements.txt) ${EXT_PACKAGE} ${EXT_TMP_PACKAGE} \
     && pip3 install --upgrade pip \
-    && pip3 install -r requirements/requirements.txt \
+    && pip3 install -r /opt/jumpserver/requirements/requirements.txt \
+    && pip uninstall PyCryptodome pycrypto -y \
+    && pip install pycrypto \
     && apk del ${EXT_TMP_PACKAGE} \
     && rm -rf Dockerfile ~/.cache/pip　.gitignore .dockerignore\
     && ln -sf /usr/bin/python3 /usr/bin/python \
@@ -20,4 +23,7 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositorie
 VOLUME ["/opt/jumpserver/data","/opt/jumpserver/logs"]
 
 EXPOSE 8080
+
+WORKDIR /opt/jumpserver
+
 ENTRYPOINT ["./entrypoint.sh"]

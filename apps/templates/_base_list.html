@@ -1,17 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load i18n %}
-{% block custom_head_css_js %}
-    <link href="{% static "css/plugins/datatables/datatables.min.css" %}" rel="stylesheet">
-    <link href="{% static 'css/plugins/select2/select2.min.css' %}" rel="stylesheet">
-    <script src="{% static 'js/plugins/select2/select2.full.min.js' %}"></script>
-    <script src="{% static "js/plugins/datatables/datatables.min.js" %}"></script>
-{% endblock %}
 {% block content %}
 <div class="wrapper wrapper-content animated fadeInRight">
     <div class="row">
         <div class="col-sm-12">
-            {% include '_message.html' %}
             <div class="ibox float-e-margins">
                 <div class="ibox-title">
                     <h5>
@@ -30,7 +23,7 @@
                     </div>
                 </div>
                 <div class="ibox-content">
-                    <div class="" id="content_start" style="overflow: hidden;">
+                    <div class="" id="content_start">
                         {% block content_left_head %} {% endblock %}
                         {% block table_search %}
                         <form id="search_form" method="get" action="" class="pull-right mail-search form-inline">

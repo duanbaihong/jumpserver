@@ -18,8 +18,8 @@ BOOTSTRAP_TOKEN:
 
 # Session expiration setting, Default 24 hour, Also set expired on on browser close
 # 浏览器Session过期时间，默认24小时, 也可以设置浏览器关闭则过期
-# SESSION_COOKIE_AGE: 3600 * 24
-# SESSION_EXPIRE_AT_BROWSER_CLOSE: False
+# SESSION_COOKIE_AGE: 86400
+# SESSION_EXPIRE_AT_BROWSER_CLOSE: false
 
 # Database setting, Support sqlite3, mysql, postgres ....
 # 数据库设置
@@ -44,6 +44,7 @@ DB_NAME: jumpserver
 # 运行时绑定端口
 HTTP_BIND_HOST: 0.0.0.0
 HTTP_LISTEN_PORT: 8080
+WS_LISTEN_PORT: 8070
 
 # Use Redis as broker for celery and web socket
 # Redis配置
@@ -61,8 +62,41 @@ REDIS_PORT: 6379
 # AUTH_OPENID_REALM_NAME: realm-name
 # AUTH_OPENID_CLIENT_ID: client-id
 # AUTH_OPENID_CLIENT_SECRET: client-secret
+# AUTH_OPENID_IGNORE_SSL_VERIFICATION: True
+# AUTH_OPENID_SHARE_SESSION: True
+#
+# Use Radius authorization
+# 使用Radius来认证
+# AUTH_RADIUS: false
+# RADIUS_SERVER: localhost
+# RADIUS_PORT: 1812
+# RADIUS_SECRET: 
+
+# LDAP/AD settings
+# LDAP 搜索分页数量
+# AUTH_LDAP_SEARCH_PAGED_SIZE: 1000
+#
+# 定时同步用户
+# 启用 / 禁用
+# AUTH_LDAP_SYNC_IS_PERIODIC: True
+# 同步间隔 (单位: 时) (优先）
+# AUTH_LDAP_SYNC_INTERVAL: 12
+# Crontab 表达式
+# AUTH_LDAP_SYNC_CRONTAB: * 6 * * *
+#
+# LDAP 用户登录时仅允许在用户列表中的用户执行 LDAP Server 认证
+# AUTH_LDAP_USER_LOGIN_ONLY_IN_USERS: False
+#
+# LDAP 认证时如果日志中出现以下信息将参数设置为 0 (详情参见：https://www.python-ldap.org/en/latest/faq.html)
+# In order to perform this operation a successful bind must be completed on the connection
+# AUTH_LDAP_OPTIONS_OPT_REFERRALS: -1
+
 
 # OTP settings
 # OTP/MFA 配置
 # OTP_VALID_WINDOW: 0
 # OTP_ISSUER_NAME: Jumpserver
+
+# Perm show single asset to ungrouped node
+# 是否把未授权节点资产放入到 未分组 节点中
+# PERM_SINGLE_ASSET_TO_UNGROUP_NODE: false

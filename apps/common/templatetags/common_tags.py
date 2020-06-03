@@ -98,13 +98,20 @@ def is_bool_field(field):
 
 
 @register.filter
+def is_image_field(field):
+    if isinstance(field, forms.ImageField):
+        return True
+    else:
+        return False
+
+
+@register.filter
 def to_dict(data):
     return dict(data)
 
 
 @register.filter
 def sort(data):
-    print(data)
     return sorted(data)
 
 

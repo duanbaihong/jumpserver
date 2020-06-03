@@ -20,14 +20,15 @@
 
         <h3>{% trans 'Auth' %}</h3>
         {% block password %}{% endblock %}
-        {% bootstrap_field form.otp_level layout="horizontal" %}
+        {% bootstrap_field form.mfa_level layout="horizontal" %}
+        {% bootstrap_field form.source layout="horizontal" %}
 
         <div class="hr-line-dashed"></div>
         <h3>{% trans 'Security and Role' %}</h3>
         {% bootstrap_field form.role layout="horizontal" %}
         <div class="form-group {% if form.date_expired.errors %} has-error {% endif %}" id="date_5">
             <label for="{{ form.date_expired.id_for_label }}" class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label">{{ form.date_expired.label }}</label>
-            <div class="col-bg-8 col-md-7 col-sm-7 col-xs-8" id="date_choise_id">
+            <div class="col-sm-9">
                 <div class="input-group date">
                     <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
                     {% if form.errors %}
@@ -46,7 +47,7 @@
         {% bootstrap_field form.comment layout="horizontal" %}
         <div class="hr-line-dashed"></div>
         <div class="form-group">
-            <div class="text-center">
+            <div class="col-sm-4 col-sm-offset-2">
                 <button class="btn btn-white" type="reset">{% trans 'Reset' %}</button>
                 <button id="submit_button" class="btn btn-primary" type="submit">{% trans 'Submit' %}</button>
             </div>
@@ -56,24 +57,32 @@
 {% endblock %}
 {% block custom_foot_js %}
     <script src="{% static 'js/plugins/datepicker/bootstrap-datepicker.js' %}"></script>
+    <script src="{% static 'js/plugins/datepicker/bootstrap-datepicker.zh-CN.min.js' %}"></script>
     <script type="text/javascript" src='{% static "js/plugins/daterangepicker/moment.min.js" %}'></script>
     <script type="text/javascript" src='{% static "js/plugins/daterangepicker/daterangepicker.min.js" %}'></script>
     <link rel="stylesheet" type="text/css" href={% static "css/plugins/daterangepicker/daterangepicker.css" %} />
 
     <script>
-        var dateOptions = {
-            singleDatePicker: true,
-            showDropdowns: true,
-            timePicker: true,
-            timePicker24Hour: true,
-            autoApply: true,
-            drops: 'up',
-            parentEl: $("#date_choise_id"),
-            locale: datatime_picker_locale
-        };
+        var role_id = '#' + '{{ form.role.id_for_label }}';
+        var groups_id = '#' + '{{ form.groups.id_for_label }}';
+        function fieldDisplay(){
+            var role = $(role_id).val();
+            if (role === 'Auditor'){
+                $(groups_id).closest('.form-group').addClass('hidden');
+            }
+            else {
+                $(groups_id).closest('.form-group').removeClass('hidden');
+            }}
+
         $(document).ready(function () {
             $('.select2').select2();
-            $('#id_date_expired').daterangepicker(dateOptions);
+            initDateRangePicker('#id_date_expired');
+            var mfa_radio = $('#id_mfa_level');
+            mfa_radio.addClass("form-inline");
+            mfa_radio.children().css("margin-right","15px");
+            fieldDisplay()
+        }).on('change', role_id, function(){
+            fieldDisplay();
         })
     </script>
 {% endblock %}

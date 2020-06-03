@@ -19,7 +19,12 @@ class CeleryTaskSerializer(serializers.Serializer):
 class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
-        fields = '__all__'
+        fields = [
+            'id', 'name', 'interval', 'crontab', 'is_periodic',
+            'is_deleted', 'comment', 'created_by', 'date_created',
+            'versions', 'is_success', 'timedelta', 'assets_amount',
+            'date_updated', 'history_summary',
+        ]
 
 
 class AdHocSerializer(serializers.ModelSerializer):
@@ -75,7 +80,7 @@ class CommandExecutionSerializer(serializers.ModelSerializer):
             'is_finished', 'date_created', 'date_finished'
         ]
         read_only_fields = [
-            'id', 'result', 'is_finished', 'log_url', 'date_created',
+            'result', 'is_finished', 'log_url', 'date_created',
             'date_finished'
         ]
 

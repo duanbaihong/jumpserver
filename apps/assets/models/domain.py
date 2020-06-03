@@ -3,14 +3,14 @@
 
 import uuid
 import random
+import re
 
 import paramiko
-
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from orgs.mixins import OrgModelMixin
-from .base import AssetUser
+from orgs.mixins.models import OrgModelMixin
+from .base import BaseUser
 
 __all__ = ['Domain', 'Gateway']
 
@@ -39,7 +39,7 @@ class Domain(OrgModelMixin):
         return random.choice(self.gateways)
 
 
-class Gateway(AssetUser):
+class Gateway(BaseUser):
     PROTOCOL_SSH = 'ssh'
     PROTOCOL_RDP = 'rdp'
     PROTOCOL_CHOICES = (
@@ -60,7 +60,12 @@ class Gateway(AssetUser):
         unique_together = [('name', 'org_id')]
         verbose_name = _("Gateway")
 
-    def test_connective(self):
+    def test_connective(self, local_port=None):
+        if local_port is None:
+            local_port = self.port
+        if self.password and not re.match(r'\w+$', self.password):
+            return False, _("Password should not contain special characters")
+
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         proxy = paramiko.SSHClient()
@@ -73,15 +78,15 @@ class Gateway(AssetUser):
                           pkey=self.private_key_obj)
         except(paramiko.AuthenticationException,
                paramiko.BadAuthenticationType,
-               paramiko.SSHException) as e:
+               paramiko.SSHException,
+               paramiko.ssh_exception.NoValidConnectionsError) as e:
             return False, str(e)
 
-        sock = proxy.get_transport().open_channel(
-            'direct-tcpip', ('127.0.0.1', self.port), ('127.0.0.1', 0)
-        )
-
         try:
-            client.connect("127.0.0.1", port=self.port,
+            sock = proxy.get_transport().open_channel(
+                'direct-tcpip', ('127.0.0.1', local_port), ('127.0.0.1', 0)
+            )
+            client.connect("127.0.0.1", port=local_port,
                            username=self.username,
                            password=self.password,
                            key_filename=self.private_key_file,

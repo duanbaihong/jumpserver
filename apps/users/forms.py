@@ -1,32 +1,13 @@
 # ~*~ coding: utf-8 ~*~
 
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm
 from django.utils.translation import gettext_lazy as _
-from captcha.fields import CaptchaField
+from django.conf import settings
 
 from common.utils import validate_ssh_public_key
-from orgs.mixins import OrgModelForm
-from orgs.utils import current_org
+from orgs.mixins.forms import OrgModelForm
 from .models import User, UserGroup
-
-
-class UserLoginForm(AuthenticationForm):
-    username = forms.CharField(label=_('Username'), max_length=100)
-    password = forms.CharField(
-        label=_('Password'), widget=forms.PasswordInput,
-        max_length=128, strip=False
-    )
-
-    def confirm_login_allowed(self, user):
-        if not user.is_staff:
-            raise forms.ValidationError(
-                self.error_messages['inactive'],
-                code='inactive',)
-
-
-class UserLoginCaptchaForm(UserLoginForm):
-    captcha = CaptchaField()
+from .utils import check_password_rules, get_current_org_members
 
 
 class UserCheckPasswordForm(forms.Form):
@@ -41,7 +22,21 @@ class UserCheckOtpCodeForm(forms.Form):
     otp_code = forms.CharField(label=_('MFA code'), max_length=6)
 
 
-class UserCreateUpdateForm(OrgModelForm):
+def get_source_choices():
+    choices_all = dict(User.SOURCE_CHOICES)
+    choices = [
+        (User.SOURCE_LOCAL, choices_all[User.SOURCE_LOCAL]),
+    ]
+    if settings.AUTH_LDAP:
+        choices.append((User.SOURCE_LDAP, choices_all[User.SOURCE_LDAP]))
+    if settings.AUTH_OPENID:
+        choices.append((User.SOURCE_OPENID, choices_all[User.SOURCE_OPENID]))
+    if settings.AUTH_RADIUS:
+        choices.append((User.SOURCE_RADIUS, choices_all[User.SOURCE_RADIUS]))
+    return choices
+
+
+class UserCreateUpdateFormMixin(OrgModelForm):
     role_choices = ((i, n) for i, n in User.ROLE_CHOICES if i != User.ROLE_APP)
     password = forms.CharField(
         label=_('Password'), widget=forms.PasswordInput,
@@ -50,6 +45,10 @@ class UserCreateUpdateForm(OrgModelForm):
     role = forms.ChoiceField(
         choices=role_choices, required=True,
         initial=User.ROLE_USER, label=_("Role")
+    )
+    source = forms.ChoiceField(
+        choices=get_source_choices, required=True,
+        initial=User.SOURCE_LOCAL, label=_("Source")
     )
     public_key = forms.CharField(
         label=_('ssh public key'), max_length=5000, required=False,
@@ -61,10 +60,11 @@ class UserCreateUpdateForm(OrgModelForm):
         model = User
         fields = [
             'username', 'name', 'email', 'groups', 'wechat',
-            'phone', 'role', 'date_expired', 'comment', 'otp_level', '_public_key'
+            'source', 'phone', 'role', 'date_expired',
+            'comment', 'mfa_level'
         ]
         widgets = {
-            'otp_level': forms.RadioSelect(),
+            'mfa_level': forms.RadioSelect(),
             'groups': forms.SelectMultiple(
                 attrs={
                     'class': 'select2',
@@ -75,13 +75,14 @@ class UserCreateUpdateForm(OrgModelForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
-        super(UserCreateUpdateForm, self).__init__(*args, **kwargs)
+        super(UserCreateUpdateFormMixin, self).__init__(*args, **kwargs)
 
         roles = []
         # Super admin user
         if self.request.user.is_superuser:
             roles.append((User.ROLE_ADMIN, dict(User.ROLE_CHOICES).get(User.ROLE_ADMIN)))
             roles.append((User.ROLE_USER, dict(User.ROLE_CHOICES).get(User.ROLE_USER)))
+            roles.append((User.ROLE_AUDITOR, dict(User.ROLE_CHOICES).get(User.ROLE_AUDITOR)))
 
         # Org admin user
         else:
@@ -95,8 +96,6 @@ class UserCreateUpdateForm(OrgModelForm):
                 roles.append((User.ROLE_USER, dict(User.ROLE_CHOICES).get(User.ROLE_USER)))
 
         field = self.fields['role']
-        if self.instance.public_key:
-            self.fields['public_key'].initial = self.instance.public_key
         field.choices = set(roles)
 
     def clean_public_key(self):
@@ -111,26 +110,57 @@ class UserCreateUpdateForm(OrgModelForm):
             raise forms.ValidationError(_('Not a valid ssh public key'))
         return public_key
 
+    def clean_password(self):
+        password_strategy = self.data.get('password_strategy')
+        # 创建-不设置密码
+        if password_strategy == '0':
+            return
+        password = self.data.get('password')
+        # 更新-密码为空
+        if password_strategy is None and not password:
+            return
+        if not check_password_rules(password):
+            msg = _('* Your password does not meet the requirements')
+            raise forms.ValidationError(msg)
+        return password
+
     def save(self, commit=True):
         password = self.cleaned_data.get('password')
-        otp_level = self.cleaned_data.get('otp_level')
+        mfa_level = self.cleaned_data.get('mfa_level')
         public_key = self.cleaned_data.get('public_key')
         user = super().save(commit=commit)
         if password:
             user.reset_password(password)
-        if otp_level:
-            user.otp_level = otp_level
+        if mfa_level:
+            user.mfa_level = mfa_level
             user.save()
         if public_key:
-            user._public_key = public_key
+            user.public_key = public_key
             user.save()
         return user
 
 
+class UserCreateForm(UserCreateUpdateFormMixin):
+    EMAIL_SET_PASSWORD = _('Reset link will be generated and sent to the user')
+    CUSTOM_PASSWORD = _('Set password')
+    PASSWORD_STRATEGY_CHOICES = (
+        (0, EMAIL_SET_PASSWORD),
+        (1, CUSTOM_PASSWORD)
+    )
+    password_strategy = forms.ChoiceField(
+        choices=PASSWORD_STRATEGY_CHOICES, required=True, initial=0,
+        widget=forms.RadioSelect(), label=_('Password strategy')
+    )
+
+
+class UserUpdateForm(UserCreateUpdateFormMixin):
+    pass
+
+
 class UserProfileForm(forms.ModelForm):
-    username = forms.CharField(label=_('Username'), max_length=100,disabled=True)
-    name = forms.CharField(label=_('Password'), max_length=100,disabled=True)
-    email = forms.CharField(label=_('Email'), max_length=100,disabled=True)
+    username = forms.CharField(disabled=True, label=_("Username"))
+    name = forms.CharField(disabled=True, label=_("Name"))
+    email = forms.CharField(disabled=True)
 
     class Meta:
         model = User
@@ -146,17 +176,17 @@ UserProfileForm.verbose_name = _("Profile")
 class UserMFAForm(forms.ModelForm):
 
     mfa_description = _(
-        'Tip: when enabled, '
+        'When enabled, '
         'you will enter the MFA binding process the next time you log in. '
         'you can also directly bind in '
         '"personal information -> quick modification -> change MFA Settings"!')
 
     class Meta:
         model = User
-        fields = ['otp_level']
-        widgets = {'otp_level': forms.RadioSelect()}
+        fields = ['mfa_level']
+        widgets = {'mfa_level': forms.RadioSelect()}
         help_texts = {
-            'otp_level': _('* Enable MFA authentication '
+            'mfa_level': _('* Enable MFA authentication '
                            'to make the account more secure.'),
         }
 
@@ -214,13 +244,13 @@ class UserPasswordForm(forms.Form):
         password = self.cleaned_data['new_password']
         self.instance.reset_password(new_password=password)
         return self.instance
-
+ 
 
 class UserPublicKeyForm(forms.Form):
     pubkey_description = _('Automatically configure and download the SSH key')
     public_key = forms.CharField(
         label=_('ssh public key'), max_length=5000, required=False,
-        widget=forms.Textarea(attrs={'placeholder': _('ssh-rsa AAAA...'), 'style': 'resize:none;width:94%' }),
+        widget=forms.Textarea(attrs={'placeholder': _('ssh-rsa AAAA...')}),
         help_text=_('Paste your id_rsa.pub here.')
     )
 
@@ -228,17 +258,14 @@ class UserPublicKeyForm(forms.Form):
         if 'instance' in kwargs:
             self.instance = kwargs.pop('instance')
         else:
-            self.instance = None    
+            self.instance = None
         super().__init__(*args, **kwargs)
-        if hasattr(self.instance,'public_key') and self.instance.public_key:
-            self.fields['public_key'].initial=self.instance.public_key
 
     def clean_public_key(self):
         public_key = self.cleaned_data['public_key']
-        # 首次登陆不判断key 是否与上次一样
-        # if self.instance.public_key and public_key == self.instance.public_key:
-        #     msg = _('Public key should not be the same as your old one.')
-        #     raise forms.ValidationError(msg)
+        if self.instance.public_key and public_key == self.instance.public_key:
+            msg = _('Public key should not be the same as your old one.')
+            raise forms.ValidationError(msg)
 
         if public_key and not validate_ssh_public_key(public_key):
             raise forms.ValidationError(_('Not a valid ssh public key'))
@@ -259,14 +286,22 @@ class UserBulkUpdateForm(OrgModelForm):
     users = forms.ModelMultipleChoiceField(
         required=True,
         label=_('Select users'),
-        queryset=User.objects.all(),
+        queryset=User.objects.none(),
         widget=forms.SelectMultiple(
             attrs={
-                'class': 'select2',
+                'class': 'users-select2',
                 'data-placeholder': _('Select users')
             }
         )
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.set_fields_queryset()
+
+    def set_fields_queryset(self):
+        users_field = self.fields['users']
+        users_field.queryset = get_current_org_members()
 
     class Meta:
         model = User
@@ -298,42 +333,33 @@ class UserBulkUpdateForm(OrgModelForm):
         return users
 
 
-def user_limit_to():
-    return {"orgs": current_org}
-
-
 class UserGroupForm(OrgModelForm):
     users = forms.ModelMultipleChoiceField(
-        queryset=User.objects.all(),
+        queryset=User.objects.none(),
         label=_("User"),
         widget=forms.SelectMultiple(
             attrs={
-                'class': 'select2',
+                'class': 'users-select2',
                 'data-placeholder': _('Select users')
             }
         ),
         required=False,
-        limit_choices_to=user_limit_to
     )
 
     def __init__(self, **kwargs):
-        instance = kwargs.get('instance')
-        if instance:
-            initial = kwargs.get('initial', {})
-            initial.update({'users': instance.users.all()})
-            kwargs['initial'] = initial
         super().__init__(**kwargs)
-        if 'initial' not in kwargs:
-            return
+        self.set_fields_queryset()
+
+    def set_fields_queryset(self):
         users_field = self.fields.get('users')
-        if hasattr(users_field, 'queryset'):
-            users_field.queryset = current_org.get_org_users()
+        if self.instance:
+            users_field.initial = self.instance.users.all()
+            users_field.queryset = self.instance.users.all()
+        else:
+            users_field.queryset = User.objects.none()
 
     def save(self, commit=True):
-        group = super().save(commit=commit)
-        users = self.cleaned_data['users']
-        group.users.set(users)
-        return group
+        raise Exception("Save by restful api")
 
     class Meta:
         model = UserGroup

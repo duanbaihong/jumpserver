@@ -1,4 +1,128 @@
-var NgApp=angular.module("NgApp",["ngRoute"]);NgApp.config(["$httpProvider",function(b){b.defaults.transformRequest=function(b){var g=[],d;for(d in b)g.push(encodeURIComponent(d)+"="+encodeURIComponent(b[d]));return g.join("&")};b.defaults.xsrfCookieName="csrftoken";b.defaults.xsrfHeaderName="X-CSRFToken";b.defaults.headers.common["X-Requested-With"]="XMLHttpRequest";b.defaults.headers.post={"Content-Type":"applications/x-www-form-urlencoded"}}]);
-NgApp.controller("TerminalRecordCtrl",function(b,t){t.post(window.location.href).success(function(g){function d(a,b){var c="0"+a;return c.substr(c.length-b)}function q(a){var b=d(Math.floor(a/36E5),2);a-=36E5*b;var c=d(Math.floor(a/6E4),2);a=d(Math.floor((a-6E4*c)/1E3),2);return b+":"+c+":"+a}function n(){document.getElementById("scrubber").value=Math.ceil(e/h*100);for(document.getElementById("beforeScrubberText").innerHTML=q(e);f<c.length;f++)if(1E3*c[f]<=e)try{var a=JSON.parse(g[c[f]]).data;m.resize(a.resize.cols,
-a.resize.rows)}catch(u){m.write(g[c[f]])}else break;f>=c.length&&clearInterval(k);e+=r}var l=!0,h=0,r=33,e=33,f=0;b.scrub=function(){e=document.getElementById("scrubber").value/100*h;b.restart(e)};b.pause=function(a){if(l||!a)l?clearInterval(k):k=setInterval(n,33),l=!l};b.setSpeed=function(){var a=document.getElementById("speed").value;r=0==a?33:0>a?33/-a:33*a};b.restart=function(a){clearInterval(k);m.reset();e=a;f=0;l=!0;k=setInterval(n,33)};var m=new Terminal({rows:35,cols:100,useStyle:!0,screenKeys:!0}),
-c=[],p;for(p in g)h=Math.max(h,p),c.push(p);c=c.sort(function(a,b){return a-b});h*=1E3;document.getElementById("afterScrubberText").innerHTML=q(h);m.open(document.getElementById("apps"));var k=setInterval(n,33)})});
+/**
+ * Created by liuzheng on 3/25/16.
+ */
+'use strict';
+
+var NgApp = angular.module('NgApp', ['ngRoute']);
+NgApp.config(['$httpProvider', function ($httpProvider) {
+    $httpProvider.defaults.transformRequest = function (obj) {
+        var str = [];
+        for (var p in obj) {
+            str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+        }
+        return str.join("&");
+    };
+    $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+    $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+    $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+    $httpProvider.defaults.headers.post = {
+        'Content-Type': 'applications/x-www-form-urlencoded'
+    }
+}]);
+NgApp.controller('TerminalRecordCtrl', function ($scope, $http) {
+    $http.post(window.location.href).success(function (data) {
+        var toggle = true;
+        var totalTime = 0;
+        var TICK = 33;
+        var TIMESTEP = 33;
+        var time = 33;
+        var timer;
+        var pos = 0;
+
+        // Thanks http://stackoverflow.com/a/2998822
+        function zeroPad(num, size) {
+            var s = "0" + num;
+            return s.substr(s.length - size);
+        }
+
+        $scope.scrub = function () {
+            var setPercent = document.getElementById('scrubber').value;
+            time = (setPercent / 100) * totalTime;
+            $scope.restart(time);
+        };
+
+        function buildTimeString(millis) {
+            var hours = zeroPad(Math.floor(millis / (1000 * 60 * 60)), 2);
+            millis -= hours * (1000 * 60 * 60);
+            var minutes = zeroPad(Math.floor(millis / (1000 * 60)), 2);
+            millis -= minutes * (1000 * 60);
+            var seconds = zeroPad(Math.floor(millis / 1000), 2);
+            return hours + ':' + minutes + ':' + seconds;
+        }
+
+        function advance() {
+            document.getElementById('scrubber').value =
+                Math.ceil((time / totalTime) * 100);
+            document.getElementById("beforeScrubberText").innerHTML = buildTimeString(time);
+            for (; pos < timelist.length; pos++) {
+                if (timelist[pos] * 1000 <= time) {
+                    try{
+                        var findResize = JSON.parse(data[timelist[pos]])['data'];
+                        term.resize(findResize['resize']['cols'], findResize['resize']['rows'])
+                    } catch (err) {
+                        term.write(data[timelist[pos]]);
+                    }
+                } else {
+                    break;
+                }
+            }
+
+            if (pos >= timelist.length) {
+                clearInterval(timer);
+            }
+
+            time += TIMESTEP;
+        }
+
+        $scope.pause = function (test) {
+            if (!toggle && test) {
+                return;
+            }
+            if (toggle) {
+                clearInterval(timer);
+                toggle = !toggle;
+            } else {
+                timer = setInterval(advance, TICK);
+                toggle = !toggle;
+            }
+        };
+
+        $scope.setSpeed = function () {
+            var speed = document.getElementById('speed').value;
+            if (speed == 0) {
+                TIMESTEP = TICK;
+            } else if (speed < 0) {
+                TIMESTEP = TICK / -speed;
+            } else {
+                TIMESTEP = TICK * speed;
+            }
+        };
+
+        $scope.restart = function (millis) {
+            clearInterval(timer);
+            term.reset();
+            time = millis;
+            pos = 0;
+            toggle = true;
+            timer = setInterval(advance, TICK);
+        };
+
+        var term = new Terminal({
+            rows: 35,
+            cols: 100,
+            useStyle: true,
+            screenKeys: true
+        });
+        var timelist = [];
+        for (var i in data) {
+            totalTime = Math.max(totalTime, i);
+            timelist.push(i);
+        }
+        timelist = timelist.sort(function(a, b){return a-b});
+        totalTime = totalTime * 1000;
+        document.getElementById("afterScrubberText").innerHTML = buildTimeString(totalTime);
+        term.open(document.getElementById('apps'));
+        timer = setInterval(advance, TICK);
+    })
+
+})

@@ -1,212 +1,30 @@
 # -*- coding: utf-8 -*-
 #
-
 import os
-import json
-import jms_storage
 import uuid
 
-from rest_framework.views import Response, APIView
-from rest_framework import generics
-from ldap3 import Server, Connection
-from django.core.mail import send_mail
 from django.core.cache import cache
-from django.utils.translation import ugettext_lazy as _
-from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
 
-from .permissions import IsOrgAdmin, IsSuperUser
-from .serializers import (
-    MailTestSerializer, LDAPTestSerializer, LDAPTestUserSerializer, OutputSerializer
-)
-from .models import Setting
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import generics, serializers
 
-from authentication.ldap.backends import LDAPAuthorizationBackend
+from .http import HttpResponseTemporaryRedirect
+from .const import KEY_CACHE_RESOURCES_ID
 from .utils import get_logger
-from users.models import User
 
-logger=get_logger(__file__)
+__all__ = [
+    'LogTailApi', 'ResourcesIDCacheApi',
+]
 
-class MailTestingAPI(APIView):
-    permission_classes = (IsOrgAdmin,)
-    serializer_class = MailTestSerializer
-    success_message = _("Test mail sent to {}, please check")
-
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            email_host_user = serializer.validated_data["EMAIL_HOST_USER"]
-            for k, v in serializer.validated_data.items():
-                if k.startswith('EMAIL'):
-                    setattr(settings, k, v)
-            try:
-                subject = "Test"
-                message = "Test smtp setting"
-                send_mail(subject, message,  email_host_user, [email_host_user])
-            except Exception as e:
-                return Response({"error": str(e)}, status=401)
-
-            return Response({"msg": self.success_message.format(email_host_user)})
-        else:
-            return Response({"error": str(serializer.errors)}, status=401)
+logger = get_logger(__file__)
 
 
-class LDAPTestingAPI(APIView):
-    permission_classes = (IsOrgAdmin,)
-    serializer_class = LDAPTestUserSerializer
-    success_message = _("Test ldap success")
-
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            ldap_username = serializer.validated_data["AUTH_LDAP_USER_NAME"]
-            ldap_password = serializer.validated_data["AUTH_LDAP_USERNAME_PASSWORD"]
-            # host = serializer.validated_data["AUTH_LDAP_SERVER_URI"]
-            # bind_dn = serializer.validated_data["AUTH_LDAP_BIND_DN"]
-            # password = serializer.validated_data["AUTH_LDAP_BIND_PASSWORD"]
-            # use_ssl = serializer.validated_data.get("AUTH_LDAP_START_TLS", False)
-            # search_ougroup = serializer.validated_data["AUTH_LDAP_SEARCH_OU"]
-            # search_filter = serializer.validated_data["AUTH_LDAP_SEARCH_FILTER"]
-            # attr_map = serializer.validated_data["AUTH_LDAP_USER_ATTR_MAP"]
-
-            # try:
-            #     attr_map = json.loads(attr_map)
-            # except json.JSONDecodeError:
-            #     return Response({"error": "AUTH_LDAP_USER_ATTR_MAP not valid"}, status=401)
-
-            # server = Server(host, use_ssl=use_ssl)
-            # conn = Connection(server, bind_dn, password)
-            # try:
-            #     conn.bind()
-            # except Exception as e:
-            #     return Response({"error": str(e)}, status=401)
-
-            # users = []
-            # for search_ou in str(search_ougroup).split("|"):
-            #     ok = conn.search(search_ou, search_filter % ({"user": "*"}),
-            #                      attributes=list(attr_map.values()))
-            #     if not ok:
-            #         return Response({"error": _("Search no entry matched in ou {}").format(search_ou)}, status=401)
-
-            #     for entry in conn.entries:
-            #         user = {}
-            #         for attr, mapping in attr_map.items():
-            #             if hasattr(entry, mapping):
-            #                 user[attr] = getattr(entry, mapping)
-            #         users.append(user)
-            local_user=User.objects.filter(username=ldap_username,source='local')
-            if local_user:
-                 return Response({"error":_('The current user [{}] is a local user and can not perform LDAP authentication login test!').format(ldap_username)},status=401)
-            users=LDAPAuthorizationBackend().authenticate(username=ldap_username,password=ldap_password)
-            if users != None:
-                return Response({"msg": _("Match users %(name)s(%(username)s),Groups [%(groups)s].")%({
-                    'name': users.name,
-                    'username': users.username,
-                    'groups': users.groups_display})
-                })
-            else:
-                return Response({"error": _("LDAP User {} Authentication Failed, Make sure the username or password is correct, or there are no find users").format(ldap_username)}, status=401)
-        else:
-            return Response({"error": serializer.errors}, status=401)
-
-
-class ReplayStorageCreateAPI(APIView):
-    permission_classes = (IsSuperUser,)
-
-    def post(self, request):
-        storage_data = request.data
-
-        if storage_data.get('TYPE') == 'ceph':
-            port = storage_data.get('PORT')
-            if port.isdigit():
-                storage_data['PORT'] = int(storage_data.get('PORT'))
-
-        storage_name = storage_data.pop('NAME')
-        data = {storage_name: storage_data}
-
-        if not self.is_valid(storage_data):
-            return Response({
-                "error": _("Error: Account invalid (Please make sure the "
-                           "information such as Access key or Secret key is correct)")},
-                status=401
-            )
-
-        Setting.save_storage('TERMINAL_REPLAY_STORAGE', data)
-        return Response({"msg": _('Create succeed')}, status=200)
-
-    @staticmethod
-    def is_valid(storage_data):
-        if storage_data.get('TYPE') == 'server':
-            return True
-        storage = jms_storage.get_object_storage(storage_data)
-        target = 'tests.py'
-        src = os.path.join(settings.BASE_DIR, 'common', target)
-        return storage.is_valid(src, target)
-
-
-class ReplayStorageDeleteAPI(APIView):
-    permission_classes = (IsSuperUser,)
-
-    def post(self, request):
-        storage_name = str(request.data.get('name'))
-        Setting.delete_storage('TERMINAL_REPLAY_STORAGE', storage_name)
-        return Response({"msg": _('Delete succeed')}, status=200)
-
-
-class CommandStorageCreateAPI(APIView):
-    permission_classes = (IsSuperUser,)
-
-    def post(self, request):
-        storage_data = request.data
-        storage_name = storage_data.pop('NAME')
-        data = {storage_name: storage_data}
-        if not self.is_valid(storage_data):
-            return Response(
-                {"error": _("Error: Account invalid (Please make sure the "
-                            "information such as Access key or Secret key is correct)")},
-                status=401
-            )
-
-        Setting.save_storage('TERMINAL_COMMAND_STORAGE', data)
-        return Response({"msg": _('Create succeed')}, status=200)
-
-    @staticmethod
-    def is_valid(storage_data):
-        if storage_data.get('TYPE') == 'server':
-            return True
-        try:
-            storage = jms_storage.get_log_storage(storage_data)
-        except Exception:
-            return False
-
-        return storage.ping()
-
-
-class CommandStorageDeleteAPI(APIView):
-    permission_classes = (IsSuperUser,)
-
-    def post(self, request):
-        storage_name = str(request.data.get('name'))
-        Setting.delete_storage('TERMINAL_COMMAND_STORAGE', storage_name)
-        return Response({"msg": _('Delete succeed')}, status=200)
-
-
-class DjangoSettingsAPI(APIView):
-    def get(self, request):
-        if not settings.DEBUG:
-            return Response("Not in debug mode")
-
-        data = {}
-        for i in [settings, getattr(settings, '_wrapped')]:
-            if not i:
-                continue
-            for k, v in i.__dict__.items():
-                if k and k.isupper():
-                    try:
-                        json.dumps(v)
-                        data[k] = v
-                    except (json.JSONDecodeError, TypeError):
-                        data[k] = str(v)
-        return Response(data)
+class OutputSerializer(serializers.Serializer):
+    output = serializers.CharField()
+    is_end = serializers.BooleanField()
+    mark = serializers.CharField()
 
 
 class LogTailApi(generics.RetrieveAPIView):
@@ -214,6 +32,8 @@ class LogTailApi(generics.RetrieveAPIView):
     buff_size = 1024 * 10
     serializer_class = OutputSerializer
     end = False
+    mark = ''
+    log_path = ''
 
     def is_file_finish_write(self):
         return True
@@ -221,27 +41,62 @@ class LogTailApi(generics.RetrieveAPIView):
     def get_log_path(self):
         raise NotImplementedError()
 
-    def get(self, request, *args, **kwargs):
-        mark = request.query_params.get("mark") or str(uuid.uuid4())
-        log_path = self.get_log_path()
+    def get_no_file_message(self, request):
+        return 'Not found the log'
 
-        if not log_path or not os.path.isfile(log_path):
-            if self.is_file_finish_write():
-                return Response({
-                    "data": 'Not found the log',
-                    'end': True,
-                    'mark': mark
-                })
-            else:
-                return Response({"data": "Waiting...\r\n"}, status=200)
+    def filter_line(self, line):
+        """
+        过滤行，可能替换一些信息
+        :param line:
+        :return:
+        """
+        return line
 
-        with open(log_path, 'r') as f:
-            offset = cache.get(mark, 0)
+    def read_from_file(self):
+        with open(self.log_path, 'rt', encoding='utf8') as f:
+            offset = cache.get(self.mark, 0)
             f.seek(offset)
             data = f.read(self.buff_size).replace('\n', '\r\n')
-            mark = str(uuid.uuid4())
-            cache.set(mark, f.tell(), 5)
+
+            new_mark = str(uuid.uuid4())
+            cache.set(new_mark, f.tell(), 5)
 
             if data == '' and self.is_file_finish_write():
                 self.end = True
-            return Response({"data": data, 'end': self.end, 'mark': mark})
+            _data = ''
+            for line in data.split('\r\n'):
+                new_line = self.filter_line(line)
+                if line == '':
+                    continue
+                _data += new_line + '\r\n'
+            return _data, self.end, new_mark
+
+    def get(self, request, *args, **kwargs):
+        self.mark = request.query_params.get("mark") or str(uuid.uuid4())
+        self.log_path = self.get_log_path()
+
+        if not self.log_path or not os.path.isfile(self.log_path):
+            msg = self.get_no_file_message(self.request)
+            return Response({"data": msg}, status=200)
+
+        data, end, new_mark = self.read_from_file()
+        return Response({"data": data, 'end': end, 'mark': new_mark})
+
+
+class ResourcesIDCacheApi(APIView):
+    def post(self, request, *args, **kwargs):
+        spm = str(uuid.uuid4())
+        resources_id = request.data.get('resources')
+        if resources_id:
+            cache_key = KEY_CACHE_RESOURCES_ID.format(spm)
+            cache.set(cache_key, resources_id, 300)
+        return Response({'spm': spm})
+
+
+@csrf_exempt
+def redirect_plural_name_api(request, *args, **kwargs):
+    resource = kwargs.get("resource", "")
+    org_full_path = request.get_full_path()
+    full_path = org_full_path.replace(resource, resource+"s", 1)
+    logger.debug("Redirect {} => {}".format(org_full_path, full_path))
+    return HttpResponseTemporaryRedirect(full_path)

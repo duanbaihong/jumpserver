@@ -83,7 +83,8 @@ h5 {
   margin-right: 0;
 }
 .navbar-top-links li a {
-  padding: 17px 10px;
+  padding: 20px 10px;
+  min-height: 50px;
 }
 .dropdown-menu {
   border: medium none;
@@ -235,9 +236,6 @@ h5 {
 .nav-third-level li a {
   padding-left: 62px;
 }
-.nav-second-level li:last-child {
-  margin-bottom: 10px;
-}
 body:not(.fixed-sidebar):not(.canvas-menu).mini-navbar .nav li:hover > .nav-second-level,
 .mini-navbar .nav li:focus > .nav-second-level {
   display: block;
@@ -253,7 +251,7 @@ body.mini-navbar .navbar-default .nav > li > .nav-second-level li a {
   padding-bottom: 60px;
 }
 .mini-navbar .nav-second-level li a {
-  padding: 10px 10px 10px 15px;
+  padding: 6px;
 }
 .mini-navbar .nav-second-level {
   position: absolute;
@@ -358,13 +356,9 @@ body.fixed-nav.fixed-nav-basic.fixed-sidebar.mini-navbar.body-small .navbar-fixe
 body.mini-navbar .navbar-static-side {
   width: 70px;
 }
-body.mini-navbar .profile-element,
 body.mini-navbar .nav-label,
 body.mini-navbar .navbar-default .nav li a span {
   display: none;
-}
-body.canvas-menu .profile-element {
-  display: block;
 }
 body:not(.fixed-sidebar):not(.canvas-menu).mini-navbar .nav-second-level {
   display: none;
@@ -405,6 +399,7 @@ body.canvas-menu .navbar-static-side {
 }
 body.fixed-sidebar.mini-navbar .navbar-static-side {
   width: 0;
+  transition:  all .3s ease-out;
 }
 body.fixed-sidebar.mini-navbar #page-wrapper {
   margin: 0 0 0 0;
@@ -414,6 +409,7 @@ body.body-small.fixed-sidebar.mini-navbar #page-wrapper {
 }
 body.body-small.fixed-sidebar.mini-navbar .navbar-static-side {
   width: 220px;
+  transition:  all .3s ease-out;
 }
 .fixed-sidebar.mini-navbar .nav li:focus > .nav-second-level,
 .canvas-menu.mini-navbar .nav li:focus > .nav-second-level {
@@ -1581,11 +1577,14 @@ table.dataTable thead .sorting_asc_disabled,
 table.dataTable thead .sorting_desc_disabled {
   background: transparent;
 }
-/*.dataTables_wrapper {
-  padding-bottom: 30px;
-}*/
+.dataTables_wrapper {
+  padding-bottom: 0px;
+}
 /*.dataTables_length {*/
   /*float: left;*/
+/*}*/
+/*.dataTables_filter label {*/
+/*  margin-right: 5px;*/
 /*}*/
 .html5buttons {
   float: right;
@@ -1595,6 +1594,7 @@ table.dataTable thead .sorting_desc_disabled {
   background: #fff;
   color: #676a6c;
   box-shadow: none;
+  padding: 6px 8px;
   font-size: 12px;
 }
 .html5buttons a:hover,
@@ -3403,24 +3403,15 @@ video {
 .modal-dialog {
   z-index: 2200;
 }
-/*.modal-body {
-  padding: 25px 30px 5px 30px;
-}*/
-.inmodal .modal-body {
+.modal-body {
+  padding: 10px;
+}
+/*.inmodal .modal-body {
   background: #f8fafb;
 }
 .inmodal .modal-header {
-  padding: 7px;
+  padding: 30px 15px;
   text-align: center;
-}
-.inmodal .modal-header .close{
-  margin-top:6px;
-}
-.inmodal .modal-body{
-  text-align: center;
-}
-.inmodal input[type='file'] {
-  display: initial;
 }
 .animated.modal.fade .modal-dialog {
   -webkit-transform: none;
@@ -3434,34 +3425,30 @@ video {
 .inmodal .modal-icon {
   font-size: 84px;
   color: #e2e3e3;
-}
+}*/
 .modal-footer {
   margin-top: 0;
 }
 /* WRAPPERS */
 #wrapper {
   width: 100%;
-  overflow-x: hidden;
   height: 100%;
+  position: absolute;
 }
 .wrapper {
   padding: 0 10px;
 }
 .wrapper-content {
-  padding: 10px 10px 10px;
+  padding: 10px 0px 5px 5px;
 }
 #page-wrapper {
-  /*padding: 0 10px;*/
-  /*min-height: 568px;*/
-  height: 100%;
+  padding: 0 10px;
   position: relative !important;
 }
 @media (min-width: 768px) {
   #page-wrapper {
     position: inherit;
     margin: 0 0 0 240px;
-    height: 100%;
-    /*min-height: 2002px;*/
   }
 }
 .title-action {
@@ -3725,6 +3712,7 @@ code {
 }
 .ibox {
   clear: both;
+  margin-bottom: 25px;
   margin-top: 0;
   padding: 0;
 }
@@ -3877,7 +3865,6 @@ table.table-mail tr td {
 }
 .panel-primary {
   border-color: #1ab394;
-  margin-top: 2px;
 }
 .panel-primary > .panel-heading {
   background-color: #1ab394;
@@ -4352,7 +4339,7 @@ body.modal-open .animated {
   z-index: inherit;
 }
 /* Show profile dropdown on fixed sidebar */
-body.mini-navbar.fixed-sidebar .profile-element,
+
 .block {
   display: block !important;
 }
@@ -4906,7 +4893,7 @@ a.compose-mail {
 .mailbox-content {
   background: none;
   border: none;
-  padding: 1px;
+  padding: 10px;
 }
 .mail-ontact {
   width: 23%;
@@ -7318,7 +7305,6 @@ body.rtls.top-navigation .footer.fixed {
   .body-small.rtls #page-wrapper {
     position: inherit;
     margin: 0 0 0 0;
-    height: 100%;
   }
   .body-small.rtls .navbar-static-side {
     display: none;
@@ -8121,14 +8107,11 @@ body.md-skin {
   position: fixed;
   display: none;
 }
-#page-wrapper {
-  transition: margin .4s ease-in-out;
-}
 @media (min-width: 768px) {
   #page-wrapper {
     position: inherit;
     margin: 0 0 0 220px;
-    height: 100%;
+    /*min-height: 1200px;*/
   }
   .navbar-static-side {
     z-index: 2001;
@@ -8145,13 +8128,14 @@ body.md-skin {
   #page-wrapper {
     position: inherit;
     margin: 0 0 0 0;
-    height: 100%;
+    /*min-height: 1000px;*/
   }
   .body-small .navbar-static-side {
     display: none;
     z-index: 2001;
     position: absolute;
     width: 70px;
+    transition: all .3s ease-out;
   }
   .body-small.mini-navbar .navbar-static-side {
     display: block;
@@ -8237,13 +8221,40 @@ body.md-skin {
     margin: 0;
   }
 }
-.wrapper.wrapper-content { 
-  height: calc(100% - 158px);
-  overflow-y: auto;
-  position: relative;
-  overflow-x: hidden;
-}
-.navbar-default.navbar-static-side {
-  transition: all .4s ease-in-out;
+.navbar-default.navbar-static-side{
   height: 100%;
+  transition: all .3s ease-out;
+  position: absolute;
+}
+
+#page-wrapper{
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0px;
+  transition: all .3s ease-out;
+}
+.wrapper.wrapper-content.animated.fadeInRight{
+  flex: 1 1 0%;
+  overflow: auto;
+  margin-bottom: 39px;
+}
+.profile-element {
+  height: 65px;
+  background: url(/static/img/logo_text.png) no-repeat;
+  background-size: 210px auto;
+  background-position: 4px;
+  transition: all .3s ease-in-out;
+}
+.mini-navbar .profile-element {
+  background: url(/static/img/logo.png) no-repeat;
+  background-size: 55px auto;
+  background-position: 7px;
+}
+.sidebar-collapse .nav > li > a{
+  min-width: 150px;
+}
+.mini-navbar .sidebar-collapse .nav > li > a{
+  min-width: initial;
 }
