@@ -102,8 +102,8 @@ class LDAPUser(_LDAPUser):
         super()._populate_user_from_attributes()
         # if hasattr(self._user,'public_key') and getattr(self._user,'public_key') != "":
         #     if(validate_ssh_public_key(getattr(self._user,'public_key'))):
-        #         # signer = get_signer()
-        #         # public_key_sign=signer.sign(self._user.public_key)
+        #         signer = get_signer()
+        #         public_key_sign=signer.sign(self._user.public_key)
         #         setattr(self._user,'public_key',self._user.public_key)
         #     else:
         #         setattr(self._user,'public_key','')
@@ -116,16 +116,18 @@ class LDAPUser(_LDAPUser):
     def _get_or_create_user(self, force_populate=False):
         super()._get_or_create_user()
         target_group_names = frozenset(self._get_groups().get_group_names())
-        if 'Jumpserver-admin' in target_group_names:
-            setattr(self._user,'role',RoleMixin.ROLE_ADMIN)
+        if len(target_group_names)>0:
+            if 'Jumpserver-admin' in target_group_names:
+                setattr(self._user,'role',RoleMixin.ROLE_ADMIN)
+            else:
+                setattr(self._user,'role',RoleMixin.ROLE_USER)
+            self._user.save()
+            if not self.settings.MIRROR_GROUPS:
+                new_groups = UserGroup.objects.filter(name__in=target_group_names)
+                if new_groups:
+                    self._user.groups.set(new_groups)
         else:
-            setattr(self._user,'role',RoleMixin.ROLE_USER)
-        self._user.save()
-        if not self.settings.MIRROR_GROUPS:
-            new_groups = UserGroup.objects.filter(name__in=target_group_names)
-            if new_groups:
-                self._user.groups.set(new_groups)
-
+            self._user=None
  
     def _mirror_groups(self):
         """
