@@ -5,24 +5,29 @@
     </a>
 </li>
 
-{% if LICENSE_VALID %}
 <li id="applications">
     <a>
         <i class="fa fa-th" style="width: 14px"></i> <span class="nav-label">{% trans 'My Applications' %}</span><span class="fa arrow"></span>
     </a>
     <ul class="nav nav-second-level">
+        {% if LICENSE_VALID %}
         <li id="user-remote-app">
             <a href="{% url 'applications:user-remote-app-list' %}">
                 <i class="" style="width: 14px"></i><span class="nav-label">{% trans 'RemoteApp' %}</span><span class="label label-info pull-right"></span>
             </a>
         </li>
+        {% endif %}
+        <li id="user-database-app">
+            <a href="{% url 'applications:user-database-app-list' %}">
+                <i class="" style="width: 14px"></i><span class="nav-label">{% trans 'DatabaseApp' %}</span><span class="label label-info pull-right"></span>
+            </a>
+        </li>
     </ul>
 </li>
-{% endif %}
 
 {% if SECURITY_COMMAND_EXECUTION %}
 <li id="ops">
-    <a href="{% url 'ops:command-execution-start' %}">
+    <a href="{% url 'ops:command-execution-create' %}">
         <i class="fa fa-terminal" style="width: 14px"></i> <span class="nav-label">{% trans 'Command execution' %}</span><span class="label label-info pull-right"></span>
     </a>
 </li>
@@ -34,11 +39,11 @@
 </li>
 <li>
     <a href="{% url 'terminal:web-terminal' %}" target="_blank"><i class="fa fa-window-maximize" style="width: 14px"></i>
-        {% trans 'Web terminal' %}
+        <span class="nav-label">{% trans 'Web terminal' %}</span>
     </a>
 </li>
 <li>
     <a href="{% url 'terminal:web-sftp' %}" target="_blank"><i class="fa fa-file" style="width: 14px"></i>
-        {% trans 'File manager' %}
+        <span class="nav-label">{% trans 'File manager' %}</span>
     </a>
 </li>

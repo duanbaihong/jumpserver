@@ -52,16 +52,29 @@ class UserLoginView(mixins.AuthMixin, FormView):
         template_name = 'authentication/xpack_login.html'
         return template_name
 
+    def get_redirect_url_if_need(self, request):
+        redirect_url = ''
+        # show jumpserver login page if request http://{JUMP-SERVER}/?admin=1
+        if self.request.GET.get("admin", 0):
+            return None
+        if settings.AUTH_OPENID:
+            redirect_url = reverse(settings.AUTH_OPENID_AUTH_LOGIN_URL_NAME)
+        elif settings.AUTH_CAS:
+            redirect_url = reverse(settings.CAS_LOGIN_URL_NAME)
+
+        if redirect_url:
+            query_string = request.GET.urlencode()
+            redirect_url = "{}?{}".format(redirect_url, query_string)
+        return redirect_url
+
     def get(self, request, *args, **kwargs):
         if request.user.is_staff:
             return redirect(redirect_user_first_login_or_index(
                 request, self.redirect_field_name)
             )
-        # show jumpserver login page if request http://{JUMP-SERVER}/?admin=1
-        if settings.AUTH_OPENID and not self.request.GET.get('admin', 0):
-            query_string = request.GET.urlencode()
-            login_url = "{}?{}".format(settings.LOGIN_URL, query_string)
-            return redirect(login_url)
+        redirect_url = self.get_redirect_url_if_need(request)
+        if redirect_url:
+            return redirect(redirect_url)
         request.session.set_test_cookie()
         return super().get(request, *args, **kwargs)
 
@@ -120,20 +133,18 @@ class UserLoginGuardView(mixins.AuthMixin, RedirectView):
             user = self.check_user_auth_if_need()
             self.check_user_mfa_if_need(user)
             self.check_user_login_confirm_if_need(user)
-        except errors.CredentialError:
+        except (errors.CredentialError, errors.SessionEmptyError):
             return self.format_redirect_url(self.login_url)
         except errors.MFARequiredError:
             return self.format_redirect_url(self.login_otp_url)
         except errors.LoginConfirmBaseError:
             return self.format_redirect_url(self.login_confirm_url)
+        except errors.MFAUnsetError as e:
+            return e.url
         else:
             auth_login(self.request, user)
             self.send_auth_signal(success=True, user=user)
             self.clear_auth_mark()
-            # 启用但是没有设置otp, 排除radius
-            if user.mfa_enabled_but_not_set():
-                # 1,2,mfa_setting & F
-                return reverse('users:user-otp-enable-authentication')
             url = redirect_user_first_login_or_index(
                 self.request, self.redirect_field_name
             )
@@ -172,11 +183,20 @@ class UserLoginWaitConfirmView(TemplateView):
 class UserLogoutView(TemplateView):
     template_name = 'flash_message_standalone.html'
 
+    @staticmethod
+    def get_backend_logout_url():
+        if settings.AUTH_OPENID:
+            return settings.AUTH_OPENID_AUTH_LOGOUT_URL_NAME
+        # if settings.AUTH_CAS:
+        #     return settings.CAS_LOGOUT_URL_NAME
+        return None
+
     def get(self, request, *args, **kwargs):
+        backend_logout_url = self.get_backend_logout_url()
+        if backend_logout_url:
+            return redirect(backend_logout_url)
+
         auth_logout(request)
-        next_uri = request.COOKIES.get("next")
-        if next_uri:
-            return redirect(next_uri)
         response = super().get(request, *args, **kwargs)
         return response
 

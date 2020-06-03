@@ -1,46 +1,38 @@
 # ~*~ coding: utf-8 ~*~
-import uuid
-
 from django.core.cache import cache
-from django.contrib.auth import logout
 from django.utils.translation import ugettext as _
 
 from rest_framework import generics
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 from rest_framework_bulk import BulkModelViewSet
 
 from common.permissions import (
-    IsOrgAdmin, IsCurrentUserOrReadOnly, IsOrgAdminOrAppUser,
+    IsOrgAdmin, IsOrgAdminOrAppUser,
     CanUpdateDeleteUser, IsSuperUser
 )
 from common.mixins import CommonApiMixin
 from common.utils import get_logger
 from orgs.utils import current_org
-from .. import serializers, utils
+from .. import serializers
+from .mixins import UserQuerysetMixin
 from ..models import User
 from ..signals import post_user_create
 
 
 logger = get_logger(__name__)
 __all__ = [
-    'UserViewSet', 'UserChangePasswordApi', 'UserUpdateGroupApi',
-    'UserResetPasswordApi', 'UserResetPKApi', 'UserUpdatePKApi',
-    'UserUnblockPKApi', 'UserProfileApi', 'UserResetOTPApi',
+    'UserViewSet', 'UserChangePasswordApi',
+    'UserUnblockPKApi', 'UserResetOTPApi',
 ]
-
-
-class UserQuerysetMixin:
-    def get_queryset(self):
-        queryset = utils.get_current_org_members()
-        return queryset
 
 
 class UserViewSet(CommonApiMixin, UserQuerysetMixin, BulkModelViewSet):
     filter_fields = ('username', 'email', 'name', 'id')
     search_fields = filter_fields
-    serializer_class = serializers.UserSerializer
-    serializer_display_class = serializers.UserDisplaySerializer
+    serializer_classes = {
+        'default': serializers.UserSerializer,
+        'display': serializers.UserDisplaySerializer
+    }
     permission_classes = (IsOrgAdmin, CanUpdateDeleteUser)
 
     def get_queryset(self):
@@ -66,6 +58,12 @@ class UserViewSet(CommonApiMixin, UserQuerysetMixin, BulkModelViewSet):
         if self.request.query_params.get('all'):
             self.permission_classes = (IsSuperUser,)
         return super().get_permissions()
+
+    def perform_destroy(self, instance):
+        if current_org.is_real():
+            instance.remove()
+        else:
+            return super().perform_destroy(instance)
 
     def perform_bulk_destroy(self, objects):
         for obj in objects:
@@ -93,49 +91,6 @@ class UserChangePasswordApi(UserQuerysetMixin, generics.RetrieveUpdateAPIView):
         user.save()
 
 
-class UserUpdateGroupApi(UserQuerysetMixin, generics.RetrieveUpdateAPIView):
-    serializer_class = serializers.UserUpdateGroupSerializer
-    permission_classes = (IsOrgAdmin,)
-
-
-class UserResetPasswordApi(UserQuerysetMixin, generics.UpdateAPIView):
-    queryset = User.objects.all()
-    serializer_class = serializers.UserSerializer
-    permission_classes = (IsAuthenticated,)
-
-    def perform_update(self, serializer):
-        # Note: we are not updating the user object here.
-        # We just do the reset-password stuff.
-        from ..utils import send_reset_password_mail
-        user = self.get_object()
-        user.password_raw = str(uuid.uuid4())
-        user.save()
-        send_reset_password_mail(user)
-
-
-class UserResetPKApi(UserQuerysetMixin, generics.UpdateAPIView):
-    serializer_class = serializers.UserSerializer
-    permission_classes = (IsAuthenticated,)
-
-    def perform_update(self, serializer):
-        from ..utils import send_reset_ssh_key_mail
-        user = self.get_object()
-        user.public_key = None
-        user.save()
-        send_reset_ssh_key_mail(user)
-
-
-# 废弃
-class UserUpdatePKApi(UserQuerysetMixin, generics.UpdateAPIView):
-    serializer_class = serializers.UserPKUpdateSerializer
-    permission_classes = (IsCurrentUserOrReadOnly,)
-
-    def perform_update(self, serializer):
-        user = self.get_object()
-        user.public_key = serializer.validated_data['public_key']
-        user.save()
-
-
 class UserUnblockPKApi(UserQuerysetMixin, generics.UpdateAPIView):
     permission_classes = (IsOrgAdmin,)
     serializer_class = serializers.UserSerializer
@@ -151,19 +106,6 @@ class UserUnblockPKApi(UserQuerysetMixin, generics.UpdateAPIView):
         cache.delete(key_block)
 
 
-class UserProfileApi(generics.RetrieveAPIView):
-    permission_classes = (IsAuthenticated,)
-    serializer_class = serializers.UserSerializer
-
-    def get_object(self):
-        return self.request.user
-
-    def retrieve(self, request, *args, **kwargs):
-        age = request.session.get_expiry_age()
-        request.session.set_expiry(age)
-        return super().retrieve(request, *args, **kwargs)
-
-
 class UserResetOTPApi(UserQuerysetMixin, generics.RetrieveAPIView):
     permission_classes = (IsOrgAdmin,)
     serializer_class = serializers.ResetOTPSerializer
@@ -176,5 +118,4 @@ class UserResetOTPApi(UserQuerysetMixin, generics.RetrieveAPIView):
         if user.mfa_enabled:
             user.reset_mfa()
             user.save()
-            logout(request)
         return Response({"msg": "success"})

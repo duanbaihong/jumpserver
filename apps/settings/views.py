@@ -4,12 +4,12 @@ from django.contrib import messages
 from django.utils.translation import ugettext as _
 
 from common.permissions import PermissionsMixin, IsSuperUser
-from common import utils
 from .utils import LDAPSyncUtil
 from .forms import EmailSettingForm, LDAPSettingForm, BasicSettingForm, \
-    TerminalSettingForm, SecuritySettingForm, EmailContentSettingForm, \
-    LDAPTestforUsername
+    TerminalSettingForm, SecuritySettingForm, EmailContentSettingForm,LDAPTestforUsername
 
+from common.utils import get_logger
+logger = get_logger(__file__)
 
 class BasicSettingView(PermissionsMixin, TemplateView):
     form_class = BasicSettingForm
@@ -78,6 +78,7 @@ class LDAPSettingView(PermissionsMixin, TemplateView):
             'form': self.form_class(),
             'form_user': self.form_user_class(),
         }
+        logger.info(self.form_class())
         kwargs.update(context)
         return super().get_context_data(**kwargs)
 
@@ -101,8 +102,9 @@ class TerminalSettingView(PermissionsMixin, TemplateView):
     permission_classes = [IsSuperUser]
 
     def get_context_data(self, **kwargs):
-        command_storage = utils.get_command_storage_setting()
-        replay_storage = utils.get_replay_storage_setting()
+        from terminal.models import CommandStorage, ReplayStorage
+        command_storage = CommandStorage.objects.all()
+        replay_storage = ReplayStorage.objects.all()
 
         context = {
             'app': _('Settings'),
@@ -125,32 +127,6 @@ class TerminalSettingView(PermissionsMixin, TemplateView):
             context = self.get_context_data()
             context.update({"form": form})
             return render(request, self.template_name, context)
-
-
-class ReplayStorageCreateView(PermissionsMixin, TemplateView):
-    template_name = 'settings/replay_storage_create.html'
-    permission_classes = [IsSuperUser]
-
-    def get_context_data(self, **kwargs):
-        context = {
-            'app': _('Settings'),
-            'action': _('Create replay storage')
-        }
-        kwargs.update(context)
-        return super().get_context_data(**kwargs)
-
-
-class CommandStorageCreateView(PermissionsMixin, TemplateView):
-    template_name = 'settings/command_storage_create.html'
-    permission_classes = [IsSuperUser]
-
-    def get_context_data(self, **kwargs):
-        context = {
-            'app': _('Settings'),
-            'action': _('Create command storage')
-        }
-        kwargs.update(context)
-        return super().get_context_data(**kwargs)
 
 
 class SecuritySettingView(PermissionsMixin, TemplateView):

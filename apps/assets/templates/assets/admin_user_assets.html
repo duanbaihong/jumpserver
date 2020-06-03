@@ -2,11 +2,6 @@
 {% load static %}
 {% load i18n %}
 
-{% block custom_head_css_js %}
-    <link href="{% static 'css/plugins/select2/select2.min.css' %}" rel="stylesheet">
-    <script src="{% static 'js/plugins/select2/select2.full.min.js' %}"></script>
-{% endblock %}
-
 {% block content %}
     <div class="wrapper wrapper-content animated fadeInRight">
         <div class="row">
@@ -77,9 +72,9 @@
 <script>
 
 $(document).ready(function () {
-	assetUserListUrl = setUrlParam(assetUserListUrl, "admin_user_id", "{{ admin_user.id }}");
-    prefer = "admin_user";
-    initAssetUserTable();
+	var assetUserListUrl = setUrlParam(defaultAssetUserListUrl, "prefer_id", "{{ admin_user.id }}");
+    assetUserListUrl = setUrlParam(assetUserListUrl, "prefer", "admin_user");
+    initAssetUserTable({assetUserListUrl: assetUserListUrl});
 })
 .on('click', '.btn-test-connective', function () {
     var the_url = "{% url 'api-assets:admin-user-connective' pk=admin_user.id %}";

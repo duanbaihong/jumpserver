@@ -33,10 +33,10 @@ class OrgQuerySetMixin:
 
         if hasattr(self, 'swagger_fake_view'):
             return queryset[:1]
-        if hasattr(self, 'action') and self.action == 'list' and \
-            hasattr(self, 'serializer_class') and \
-                hasattr(self.serializer_class, 'setup_eager_loading'):
-            queryset = self.serializer_class.setup_eager_loading(queryset)
+        if hasattr(self, 'action') and self.action == 'list':
+            serializer_class = self.get_serializer_class()
+            if serializer_class and hasattr(serializer_class, 'setup_eager_loading'):
+                queryset = serializer_class.setup_eager_loading(queryset)
         return queryset
 
 
@@ -46,7 +46,11 @@ class OrgModelViewSet(CommonApiMixin, OrgQuerySetMixin, ModelViewSet):
 
 class OrgBulkModelViewSet(CommonApiMixin, OrgQuerySetMixin, BulkModelViewSet):
     def allow_bulk_destroy(self, qs, filtered):
-        if qs.count() <= filtered.count():
+        qs_count = qs.count()
+        filtered_count = filtered.count()
+        if filtered_count == 1:
+            return True
+        if qs_count <= filtered_count:
             return False
         if self.request.query_params.get('spm', ''):
             return True

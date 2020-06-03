@@ -1,31 +1,36 @@
 # -*- coding: utf-8 -*-
 #
-import os
-
-from django.shortcuts import get_object_or_404
+from django.utils.translation import ugettext as _
+from django.shortcuts import get_object_or_404, reverse
 from django.core.files.storage import default_storage
-from django.http import HttpResponseNotFound
-from django.conf import settings
-from rest_framework import viewsets
+from rest_framework import viewsets, views
 from rest_framework.response import Response
-import jms_storage
 
-from common.utils import is_uuid, get_logger
-from common.permissions import IsOrgAdminOrAppUser, IsOrgAuditor
-from common.filters import DatetimeRangeFilter
+from common.utils import is_uuid, get_logger, get_object_or_none
+from common.mixins.api import AsyncApiMixin
+from common.permissions import IsOrgAdminOrAppUser, IsOrgAuditor, IsAppUser
+from common.drf.filters import DatetimeRangeFilter
 from orgs.mixins.api import OrgBulkModelViewSet
+from orgs.utils import tmp_to_root_org, tmp_to_org
+from users.models import User
+from ..utils import find_session_replay_local, download_session_replay
 from ..hands import SystemUser
 from ..models import Session
 from .. import serializers
 
 
-__all__ = ['SessionViewSet', 'SessionReplayViewSet',]
+__all__ = [
+    'SessionViewSet', 'SessionReplayViewSet', 'SessionJoinValidateAPI'
+]
 logger = get_logger(__name__)
 
 
 class SessionViewSet(OrgBulkModelViewSet):
     model = Session
-    serializer_class = serializers.SessionSerializer
+    serializer_classes = {
+        'default': serializers.SessionSerializer,
+        'display': serializers.SessionDisplaySerializer,
+    }
     permission_classes = (IsOrgAdminOrAppUser, )
     filterset_fields = [
         "user", "asset", "system_user", "remote_addr",
@@ -59,10 +64,11 @@ class SessionViewSet(OrgBulkModelViewSet):
         return super().get_permissions()
 
 
-class SessionReplayViewSet(viewsets.ViewSet):
+class SessionReplayViewSet(AsyncApiMixin, viewsets.ViewSet):
     serializer_class = serializers.ReplaySerializer
     permission_classes = (IsOrgAdminOrAppUser | IsOrgAuditor,)
     session = None
+    download_cache_key = "SESSION_REPLAY_DOWNLOAD_{}"
 
     def create(self, request, *args, **kwargs):
         session_id = kwargs.get('pk')
@@ -83,43 +89,69 @@ class SessionReplayViewSet(viewsets.ViewSet):
             logger.error(msg)
             return Response({'msg': serializer.errors}, status=401)
 
-    def retrieve(self, request, *args, **kwargs):
-        session_id = kwargs.get('pk')
-        session = get_object_or_404(Session, id=session_id)
-
+    @staticmethod
+    def get_replay_data(session, url):
         tp = 'json'
         if session.protocol in ('rdp', 'vnc'):
             tp = 'guacamole'
 
-        data = {'type': tp, 'src': ''}
+        download_url = reverse('terminal:session-replay-download', kwargs={'pk': session.id})
+        data = {
+            'type': tp, 'src': url,
+            'user': session.user, 'asset': session.asset,
+            'system_user': session.system_user,
+            'date_start': session.date_start,
+            'date_end': session.date_end,
+            'download_url': download_url,
+        }
+        return data
 
-        # 新版本和老版本的文件后缀不同
-        session_path = session.get_rel_replay_path()  # 存在外部存储上的路径
-        local_path = session.get_local_path()
-        local_path_v1 = session.get_local_path(version=1)
+    def is_need_async(self):
+        if self.action != 'retrieve':
+            return False
+        return True
 
-        # 去default storage中查找
-        for _local_path in (local_path, local_path_v1, session_path):
-            if default_storage.exists(_local_path):
-                url = default_storage.url(_local_path)
-                data['src'] = url
-                return Response(data)
+    def retrieve(self, request, *args, **kwargs):
+        session_id = kwargs.get('pk')
+        session = get_object_or_404(Session, id=session_id)
+        local_path, url = find_session_replay_local(session)
 
-        # 去定义的外部storage查找
-        configs = settings.TERMINAL_REPLAY_STORAGE
-        configs = {k: v for k, v in configs.items() if v['TYPE'] != 'server'}
-        if not configs:
-            return HttpResponseNotFound()
-
-        target_path = os.path.join(default_storage.base_location, local_path)   # 保存到storage的路径
-        target_dir = os.path.dirname(target_path)
-        if not os.path.isdir(target_dir):
-            os.makedirs(target_dir, exist_ok=True)
-        storage = jms_storage.get_multi_object_storage(configs)
-        ok, err = storage.download(session_path, target_path)
-        if not ok:
-            logger.error("Failed download replay file: {}".format(err))
-            return HttpResponseNotFound()
-        data['src'] = default_storage.url(local_path)
+        if not local_path:
+            local_path, url = download_session_replay(session)
+            if not local_path:
+                return Response({"error": url})
+        data = self.get_replay_data(session, url)
         return Response(data)
 
+
+class SessionJoinValidateAPI(views.APIView):
+    permission_classes = (IsAppUser, )
+    serializer_class = serializers.SessionJoinValidateSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if not serializer.is_valid():
+            msg = str(serializer.errors)
+            return Response({'ok': False, 'msg': msg}, status=401)
+        user_id = serializer.validated_data['user_id']
+        session_id = serializer.validated_data['session_id']
+
+        with tmp_to_root_org():
+            session = get_object_or_none(Session, pk=session_id)
+        if not session:
+            msg = _('Session does not exist: {}'.format(session_id))
+            return Response({'ok': False, 'msg': msg}, status=401)
+        if not session.can_join:
+            msg = _('Session is finished or the protocol not supported')
+            return Response({'ok': False, 'msg': msg}, status=401)
+
+        user = get_object_or_none(User, pk=user_id)
+        if not user:
+            msg = _('User does not exist: {}'.format(user_id))
+            return Response({'ok': False, 'msg': msg}, status=401)
+        with tmp_to_org(session.org):
+            if not user.admin_or_audit_orgs:
+                msg = _('User does not have permission')
+                return Response({'ok': False, 'msg': msg}, status=401)
+
+        return Response({'ok': True, 'msg': ''}, status=200)

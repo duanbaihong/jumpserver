@@ -16,6 +16,11 @@ urlpatterns = [
     # Asset user view
     path('asset/<uuid:pk>/asset-user/', views.AssetUserListView.as_view(), name='asset-user-list'),
 
+    path('platform/', views.PlatformListView.as_view(), name='platform-list'),
+    path('platform/create/', views.PlatformCreateView.as_view(), name='platform-create'),
+    path('platform/<int:pk>/', views.PlatformDetailView.as_view(), name='platform-detail'),
+    path('platform/<int:pk>/update/', views.PlatformUpdateView.as_view(), name='platform-update'),
+
     # User asset view
     path('user-asset/', views.UserAssetListView.as_view(), name='user-asset-list'),
 
@@ -34,6 +39,7 @@ urlpatterns = [
     path('system-user/<uuid:pk>/update/', views.SystemUserUpdateView.as_view(), name='system-user-update'),
     path('system-user/<uuid:pk>/delete/', views.SystemUserDeleteView.as_view(), name='system-user-delete'),
     path('system-user/<uuid:pk>/asset/', views.SystemUserAssetView.as_view(), name='system-user-asset'),
+    path('system-user/<uuid:pk>/user/', views.SystemUserUserView.as_view(), name='system-user-user'),
 
     path('label/', views.LabelListView.as_view(), name='label-list'),
     path('label/create/', views.LabelCreateView.as_view(), name='label-create'),

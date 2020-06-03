@@ -55,7 +55,7 @@ def get_default_options():
     return options
 
 
-# Jumpserver not use playbook
+# JumpServer not use playbook
 class PlayBookRunner:
     """
     用于执行AnsiblePlaybook的接口.简化Playbook对象的使用.
@@ -228,7 +228,7 @@ class AdHocRunner:
 
 class CommandRunner(AdHocRunner):
     results_callback_class = CommandResultCallback
-    modules_choices = ('shell', 'raw', 'command', 'script')
+    modules_choices = ('shell', 'raw', 'command', 'script', 'win_shell')
 
     def execute(self, cmd, pattern, module='shell'):
         if module and module not in self.modules_choices:

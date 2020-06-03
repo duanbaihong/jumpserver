@@ -9,6 +9,7 @@ import uuid
 from functools import wraps
 import time
 import ipaddress
+import psutil
 
 
 UUID_PATTERN = re.compile(r'\w{8}(-\w{4}){3}-\w{12}')
@@ -26,12 +27,12 @@ def combine_seq(s1, s2, callback=None):
     return seq
 
 
-def get_logger(name=None):
+def get_logger(name=''):
     return logging.getLogger('jumpserver.%s' % name)
 
 
-def get_syslogger(name=None):
-    return logging.getLogger('jms.%s' % name)
+def get_syslogger(name=''):
+    return logging.getLogger('syslog.%s' % name)
 
 
 def timesince(dt, since='', default="just now"):
@@ -198,11 +199,15 @@ logger = get_logger(__name__)
 
 def timeit(func):
     def wrapper(*args, **kwargs):
-        logger.debug("Start call: {}".format(func.__name__))
+        if hasattr(func, '__name__'):
+            name = func.__name__
+        else:
+            name = func
+        logger.debug("Start call: {}".format(name))
         now = time.time()
         result = func(*args, **kwargs)
         using = (time.time() - now) * 1000
-        msg = "End call {}, using: {:.1f}ms".format(func.__name__, using)
+        msg = "End call {}, using: {:.1f}ms".format(name, using)
         logger.debug(msg)
         return result
     return wrapper
@@ -234,3 +239,10 @@ class lazyproperty:
             value = self.func(instance)
             setattr(instance, self.func.__name__, value)
             return value
+
+
+def get_disk_usage():
+    partitions = psutil.disk_partitions()
+    mount_points = [p.mountpoint for p in partitions]
+    usages = {p: psutil.disk_usage(p) for p in mount_points}
+    return usages

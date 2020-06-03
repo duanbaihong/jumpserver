@@ -13,6 +13,7 @@ urlpatterns = [
     path('password/forgot/sendmail-success/', views.UserForgotPasswordSendmailSuccessView.as_view(), name='forgot-password-sendmail-success'),
     path('password/reset/', views.UserResetPasswordView.as_view(), name='reset-password'),
     path('password/reset/success/', views.UserResetPasswordSuccessView.as_view(), name='reset-password-success'),
+    path('password/verify/', views.UserVerifyPasswordView.as_view(), name='user-verify-password'),
 
     # Profile
     path('profile/', views.UserProfileView.as_view(), name='user-profile'),
@@ -20,10 +21,11 @@ urlpatterns = [
     path('profile/password/update/', views.UserPasswordUpdateView.as_view(), name='user-password-update'),
     path('profile/pubkey/update/', views.UserPublicKeyUpdateView.as_view(), name='user-pubkey-update'),
     path('profile/pubkey/generate/', views.UserPublicKeyGenerateView.as_view(), name='user-pubkey-generate'),
-    path('profile/otp/enable/authentication/', views.UserOtpEnableAuthenticationView.as_view(), name='user-otp-enable-authentication'),
+
+    path('profile/otp/enable/start/', views.UserOtpEnableStartView.as_view(), name='user-otp-enable-start'),
     path('profile/otp/enable/install-app/', views.UserOtpEnableInstallAppView.as_view(), name='user-otp-enable-install-app'),
     path('profile/otp/enable/bind/', views.UserOtpEnableBindView.as_view(), name='user-otp-enable-bind'),
-    path('profile/otp/disable/authentication/', views.UserOtpDisableAuthenticationView.as_view(), name='user-otp-disable-authentication'),
+    path('profile/otp/disable/authentication/', views.UserDisableMFAView.as_view(), name='user-otp-disable-authentication'),
     path('profile/otp/update/', views.UserOtpUpdateView.as_view(), name='user-otp-update'),
     path('profile/otp/settings-success/', views.UserOtpSettingsSuccessView.as_view(), name='user-otp-settings-success'),
 
@@ -35,6 +37,11 @@ urlpatterns = [
     path('user/update/', views.UserBulkUpdateView.as_view(), name='user-bulk-update'),
     path('user/<uuid:pk>/', views.UserDetailView.as_view(), name='user-detail'),
     path('user/<uuid:pk>/assets/', views.UserGrantedAssetView.as_view(), name='user-granted-asset'),
+    path('user/<uuid:pk>/asset-permissions/', views.UserAssetPermissionListView.as_view(), name='user-asset-permission'),
+    path('user/<uuid:pk>/remote-apps/', views.UserGrantedRemoteAppView.as_view(), name='user-granted-remote-app'),
+    path('user/<uuid:pk>/remote-app-permissions/', views.UserRemoteAppPermissionListView.as_view(), name='user-remote-app-permission'),
+    path('user/<uuid:pk>/database-apps/', views.UserGrantedDatabasesAppView.as_view(), name='user-granted-database-app'),
+    path('user/<uuid:pk>/database-app-permissions/', views.UserDatabaseAppPermissionListView.as_view(), name='user-database-app-permission'),
     path('user/<uuid:pk>/login-history/', views.UserDetailView.as_view(), name='user-login-history'),
 
     # User group view

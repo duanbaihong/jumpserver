@@ -3,8 +3,6 @@
 {% load static %}
 {% load bootstrap3 %}
 {% block custom_head_css_js %}
-    <link href="{% static 'css/plugins/select2/select2.min.css' %}" rel="stylesheet">
-    <script src="{% static 'js/plugins/select2/select2.full.min.js' %}"></script>
     <link href="{% static 'css/plugins/datepicker/datepicker3.css' %}" rel="stylesheet">
 {% endblock %}
 
@@ -52,13 +50,13 @@
 
                             <h3>{% trans 'Other' %}</h3>
                             <div class="form-group">
-                                <label for="{{ form.is_active.id_for_label }}" class="col-sm-2 control-label">{% trans 'Active' %}</label>
+                                <label for="{{ form.is_active.id_for_label }}" class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label">{% trans 'Active' %}</label>
                                 <div class="col-sm-8">
                                     {{ form.is_active }}
                                 </div>
                             </div>
                             <div class="form-group {% if form.date_expired.errors or form.date_start.errors %} has-error {% endif %}" id="date_5">
-                                <label for="{{ form.date_expired.id_for_label }}" class="col-sm-2 control-label">{% trans 'Validity period' %}</label>
+                                <label for="{{ form.date_expired.id_for_label }}" class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label">{% trans 'Validity period' %}</label>
                                 <div class="col-sm-9">
                                     <div class="input-daterange input-group" id="datepicker">
                                         <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
@@ -104,7 +102,6 @@ var dateOptions = {
     singleDatePicker: true,
     showDropdowns: true,
     timePicker: true,
-    drops: "up"
     timePicker24Hour: true,
     autoApply: true,
     locale: {
@@ -126,7 +123,7 @@ $(document).ready(function () {
     var method = "POST";
     var the_url = '{% url "api-perms:remote-app-permission-list" %}';
     var redirect_to = '{% url "perms:remote-app-permission-list" %}';
-    {% if type == "update" %}
+    {% if api_action == "update" %}
         the_url = '{% url "api-perms:remote-app-permission-detail" pk=object.id %}';
         method = "PUT";
     {% endif %}

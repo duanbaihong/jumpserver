@@ -7,17 +7,23 @@ from common.utils import validate_ssh_public_key
 from common.mixins import BulkSerializerMixin
 from common.serializers import AdaptedBulkListSerializer
 from common.permissions import CanUpdateDeleteUser
-from ..models import User, UserGroup
+from ..models import User
 
 
 __all__ = [
-    'UserSerializer', 'UserPKUpdateSerializer', 'UserUpdateGroupSerializer',
+    'UserSerializer', 'UserPKUpdateSerializer',
     'ChangeUserPasswordSerializer', 'ResetOTPSerializer',
     'UserProfileSerializer', 'UserDisplaySerializer',
 ]
 
 
+class UserOrgSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    name = serializers.CharField()
+
+
 class UserSerializer(BulkSerializerMixin, serializers.ModelSerializer):
+    admin_or_audit_orgs = UserOrgSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
@@ -27,7 +33,8 @@ class UserSerializer(BulkSerializerMixin, serializers.ModelSerializer):
             'groups', 'role', 'wechat', 'phone', 'mfa_level',
             'comment', 'source', 'is_valid', 'is_expired',
             'is_active', 'created_by', 'is_first_login',
-            'date_password_last_updated', 'date_expired', 'avatar_url',
+            'date_password_last_updated', 'date_expired',
+            'avatar_url', 'admin_or_audit_orgs',
         ]
         extra_kwargs = {
             'password': {'write_only': True, 'required': False, 'allow_null': True, 'allow_blank': True},
@@ -74,8 +81,17 @@ class UserSerializer(BulkSerializerMixin, serializers.ModelSerializer):
             attrs['password_raw'] = password
         return attrs
 
+    @staticmethod
+    def clean_auth_fields(attrs):
+        for field in ('password', 'public_key'):
+            value = attrs.get(field)
+            if not value:
+                attrs.pop(field, None)
+        return attrs
+
     def validate(self, attrs):
         attrs = self.change_password_to_raw(attrs)
+        attrs = self.clean_auth_fields(attrs)
         return attrs
 
 
@@ -121,16 +137,6 @@ class UserPKUpdateSerializer(serializers.ModelSerializer):
         if not validate_ssh_public_key(value):
             raise serializers.ValidationError(_('Not a valid ssh public key'))
         return value
-
-
-class UserUpdateGroupSerializer(serializers.ModelSerializer):
-    groups = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=UserGroup.objects
-    )
-
-    class Meta:
-        model = User
-        fields = ['id', 'groups']
 
 
 class ChangeUserPasswordSerializer(serializers.ModelSerializer):

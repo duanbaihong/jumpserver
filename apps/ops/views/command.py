@@ -15,7 +15,7 @@ from ..forms import CommandExecutionForm
 
 
 __all__ = [
-    'CommandExecutionListView', 'CommandExecutionStartView'
+    'CommandExecutionListView', 'CommandExecutionCreateView'
 ]
 
 
@@ -55,7 +55,7 @@ class CommandExecutionListView(PermissionsMixin, DatetimeSearchMixin, ListView):
         return super().get_context_data(**kwargs)
 
 
-class CommandExecutionStartView(PermissionsMixin, TemplateView):
+class CommandExecutionCreateView(PermissionsMixin, TemplateView):
     template_name = 'ops/command_execution_create.html'
     form_class = CommandExecutionForm
     permission_classes = [IsValidUser]
@@ -66,10 +66,10 @@ class CommandExecutionStartView(PermissionsMixin, TemplateView):
         return super().get_permissions()
 
     def get_user_system_users(self):
-        from perms.utils import AssetPermissionUtilV2
+        from perms.utils import AssetPermissionUtil
         user = self.request.user
         with tmp_to_root_org():
-            util = AssetPermissionUtilV2(user)
+            util = AssetPermissionUtil(user)
             system_users = util.get_system_users()
         return system_users
 
@@ -80,7 +80,7 @@ class CommandExecutionStartView(PermissionsMixin, TemplateView):
             'action': _('Command execution'),
             'form': self.get_form(),
             'system_users': system_users,
-            'ws_port': settings.CONFIG.WS_LISTEN_PORT
+            'ws_port': settings.WS_LISTEN_PORT
         }
         kwargs.update(context)
         return super().get_context_data(**kwargs)

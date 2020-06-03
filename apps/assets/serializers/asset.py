@@ -1,22 +1,20 @@
 # -*- coding: utf-8 -*-
 #
-import re
 from rest_framework import serializers
-from django.db.models import Prefetch
+from django.db.models import Prefetch, F
+
 from django.utils.translation import ugettext_lazy as _
 
 from orgs.mixins.serializers import BulkOrgResourceModelSerializer
 from common.serializers import AdaptedBulkListSerializer
-from ..models import Asset, Node, Label
-from ..const import (
-    GENERAL_FORBIDDEN_SPECIAL_CHARACTERS_PATTERN,
-    GENERAL_FORBIDDEN_SPECIAL_CHARACTERS_ERROR_MSG
-)
+from ..models import Asset, Node, Label, Platform
 from .base import ConnectivitySerializer
 
 __all__ = [
     'AssetSerializer', 'AssetSimpleSerializer',
-    'ProtocolsField',
+    'AssetDisplaySerializer',
+    'ProtocolsField', 'PlatformSerializer',
+    'AssetDetailSerializer', 'AssetTaskSerializer',
 ]
 
 
@@ -65,9 +63,10 @@ class ProtocolsField(serializers.ListField):
 
 
 class AssetSerializer(BulkOrgResourceModelSerializer):
+    platform = serializers.SlugRelatedField(
+        slug_field='name', queryset=Platform.objects.all(), label=_("Platform")
+    )
     protocols = ProtocolsField(label=_('Protocols'), required=False)
-    connectivity = ConnectivitySerializer(read_only=True, label=_("Connectivity"))
-
     """
     资产的数据结构
     """
@@ -81,7 +80,7 @@ class AssetSerializer(BulkOrgResourceModelSerializer):
             'cpu_model', 'cpu_count', 'cpu_cores', 'cpu_vcpus', 'memory',
             'disk_total', 'disk_info', 'os', 'os_version', 'os_arch',
             'hostname_raw', 'comment', 'created_by', 'date_created',
-            'hardware_info', 'connectivity',
+            'hardware_info',
         ]
         read_only_fields = (
             'vendor', 'model', 'sn', 'cpu_model', 'cpu_count',
@@ -96,22 +95,14 @@ class AssetSerializer(BulkOrgResourceModelSerializer):
             'org_name': {'label': _('Org name')}
         }
 
-    @staticmethod
-    def validate_hostname(hostname):
-        pattern = GENERAL_FORBIDDEN_SPECIAL_CHARACTERS_PATTERN
-        res = re.search(pattern, hostname)
-        if res is not None:
-            msg = GENERAL_FORBIDDEN_SPECIAL_CHARACTERS_ERROR_MSG
-            raise serializers.ValidationError(msg)
-        return hostname
-
     @classmethod
     def setup_eager_loading(cls, queryset):
         """ Perform necessary eager loading of data. """
         queryset = queryset.prefetch_related(
             Prefetch('nodes', queryset=Node.objects.all().only('id')),
             Prefetch('labels', queryset=Label.objects.all().only('id')),
-        ).select_related('admin_user', 'domain')
+        ).select_related('admin_user', 'domain', 'platform') \
+         .annotate(platform_base=F('platform__base'))
         return queryset
 
     def compatible_with_old_protocol(self, validated_data):
@@ -139,9 +130,55 @@ class AssetSerializer(BulkOrgResourceModelSerializer):
         return super().update(instance, validated_data)
 
 
+class AssetDisplaySerializer(AssetSerializer):
+    connectivity = ConnectivitySerializer(read_only=True, label=_("Connectivity"))
+
+    class Meta(AssetSerializer.Meta):
+        fields = [
+            'id', 'ip', 'hostname', 'protocol', 'port',
+            'protocols', 'is_active', 'public_ip',
+            'number', 'vendor', 'model', 'sn',
+            'cpu_model', 'cpu_count', 'cpu_cores', 'cpu_vcpus', 'memory',
+            'disk_total', 'disk_info', 'os', 'os_version', 'os_arch',
+            'hostname_raw', 'comment', 'created_by', 'date_created',
+            'hardware_info', 'connectivity',
+        ]
+
+    @classmethod
+    def setup_eager_loading(cls, queryset):
+        """ Perform necessary eager loading of data. """
+        queryset = queryset\
+            .annotate(admin_user_username=F('admin_user__username'))
+        return queryset
+
+
+class PlatformSerializer(serializers.ModelSerializer):
+    meta = serializers.DictField(required=False, allow_null=True)
+
+    class Meta:
+        model = Platform
+        fields = [
+            'id', 'name', 'base', 'charset',
+            'internal', 'meta', 'comment'
+        ]
+
+
+class AssetDetailSerializer(AssetSerializer):
+    platform = PlatformSerializer(read_only=True)
+
+
 class AssetSimpleSerializer(serializers.ModelSerializer):
     connectivity = ConnectivitySerializer(read_only=True, label=_("Connectivity"))
 
     class Meta:
         model = Asset
         fields = ['id', 'hostname', 'ip', 'connectivity', 'port']
+
+
+class AssetTaskSerializer(serializers.Serializer):
+    ACTION_CHOICES = (
+        ('refresh', 'refresh'),
+        ('test', 'test'),
+    )
+    task = serializers.CharField(read_only=True)
+    action = serializers.ChoiceField(choices=ACTION_CHOICES, write_only=True)

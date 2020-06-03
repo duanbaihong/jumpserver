@@ -236,9 +236,6 @@ h5 {
 .nav-third-level li a {
   padding-left: 62px;
 }
-.nav-second-level li:last-child {
-  margin-bottom: 10px;
-}
 body:not(.fixed-sidebar):not(.canvas-menu).mini-navbar .nav li:hover > .nav-second-level,
 .mini-navbar .nav li:focus > .nav-second-level {
   display: block;
@@ -254,7 +251,7 @@ body.mini-navbar .navbar-default .nav > li > .nav-second-level li a {
   padding-bottom: 60px;
 }
 .mini-navbar .nav-second-level li a {
-  padding: 10px 10px 10px 15px;
+  padding: 6px;
 }
 .mini-navbar .nav-second-level {
   position: absolute;
@@ -402,6 +399,7 @@ body.canvas-menu .navbar-static-side {
 }
 body.fixed-sidebar.mini-navbar .navbar-static-side {
   width: 0;
+  transition:  all .3s ease-out;
 }
 body.fixed-sidebar.mini-navbar #page-wrapper {
   margin: 0 0 0 0;
@@ -411,6 +409,7 @@ body.body-small.fixed-sidebar.mini-navbar #page-wrapper {
 }
 body.body-small.fixed-sidebar.mini-navbar .navbar-static-side {
   width: 220px;
+  transition:  all .3s ease-out;
 }
 .fixed-sidebar.mini-navbar .nav li:focus > .nav-second-level,
 .canvas-menu.mini-navbar .nav li:focus > .nav-second-level {
@@ -8136,6 +8135,7 @@ body.md-skin {
     z-index: 2001;
     position: absolute;
     width: 70px;
+    transition: all .3s ease-out;
   }
   .body-small.mini-navbar .navbar-static-side {
     display: block;
@@ -8224,6 +8224,7 @@ body.md-skin {
 .navbar-default.navbar-static-side{
   height: 100%;
   transition: all .3s ease-out;
+  position: absolute;
 }
 
 #page-wrapper{
@@ -8250,4 +8251,10 @@ body.md-skin {
   background: url(/static/img/logo.png) no-repeat;
   background-size: 55px auto;
   background-position: 7px;
+}
+.sidebar-collapse .nav > li > a{
+  min-width: 150px;
+}
+.mini-navbar .sidebar-collapse .nav > li > a{
+  min-width: initial;
 }

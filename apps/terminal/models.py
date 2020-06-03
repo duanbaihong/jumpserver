@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import os
 import uuid
+import jms_storage
 
 from django.db import models
 from django.db.models.signals import post_save
@@ -13,9 +14,11 @@ from django.core.cache import cache
 
 from users.models import User
 from orgs.mixins.models import OrgModelMixin
-from common.utils import get_command_storage_setting, get_replay_storage_setting
+from common.mixins import CommonModelMixin
+from common.fields.model import EncryptJsonDictTextField
 from .backends import get_multi_command_storage
 from .backends.command.models import AbstractSessionCommand
+from . import const
 
 
 class Terminal(models.Model):
@@ -55,21 +58,45 @@ class Terminal(models.Model):
             self.user.is_active = active
             self.user.save()
 
-    def get_command_storage_setting(self):
-        storage_all = get_command_storage_setting()
-        if self.command_storage in storage_all:
-            storage = storage_all.get(self.command_storage)
+    def get_command_storage(self):
+        storage = CommandStorage.objects.filter(name=self.command_storage).first()
+        return storage
+
+    def get_command_storage_config(self):
+        s = self.get_command_storage()
+        if s:
+            config = s.config
         else:
-            storage = storage_all.get('default')
-        return {"TERMINAL_COMMAND_STORAGE": storage}
+            config = settings.DEFAULT_TERMINAL_COMMAND_STORAGE
+        return config
+
+    def get_command_storage_setting(self):
+        config = self.get_command_storage_config()
+        return {"TERMINAL_COMMAND_STORAGE": config}
+
+    def get_replay_storage(self):
+        storage = ReplayStorage.objects.filter(name=self.replay_storage).first()
+        return storage
+
+    def get_replay_storage_config(self):
+        s = self.get_replay_storage()
+        if s:
+            config = s.config
+        else:
+            config = settings.DEFAULT_TERMINAL_REPLAY_STORAGE
+        return config
 
     def get_replay_storage_setting(self):
-        storage_all = get_replay_storage_setting()
-        if self.replay_storage in storage_all:
-            storage = storage_all.get(self.replay_storage)
-        else:
-            storage = storage_all.get('default')
-        return {"TERMINAL_REPLAY_STORAGE": storage}
+        config = self.get_replay_storage_config()
+        return {"TERMINAL_REPLAY_STORAGE": config}
+
+    @staticmethod
+    def get_login_title_setting():
+        login_title = None
+        if settings.XPACK_ENABLED:
+            from xpack.plugins.interface.models import Interface
+            login_title = Interface.get_login_title()
+        return {'TERMINAL_HEADER_TITLE': login_title}
 
     @property
     def config(self):
@@ -80,6 +107,7 @@ class Terminal(models.Model):
             configs[k] = getattr(settings, k)
         configs.update(self.get_command_storage_setting())
         configs.update(self.get_replay_storage_setting())
+        configs.update(self.get_login_title_setting())
         configs.update({
             'SECURITY_MAX_IDLE_TIME': settings.SECURITY_MAX_IDLE_TIME
         })
@@ -150,20 +178,24 @@ class Session(OrgModelMixin):
         ('rdp', 'rdp'),
         ('vnc', 'vnc'),
         ('telnet', 'telnet'),
+        ('mysql', 'mysql'),
     )
 
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
-    user = models.CharField(max_length=128, verbose_name=_("User"))
-    asset = models.CharField(max_length=1024, verbose_name=_("Asset"))
-    system_user = models.CharField(max_length=128, verbose_name=_("System user"))
+    user = models.CharField(max_length=128, verbose_name=_("User"), db_index=True)
+    user_id = models.CharField(blank=True, default='', max_length=36, db_index=True)
+    asset = models.CharField(max_length=128, verbose_name=_("Asset"), db_index=True)
+    asset_id = models.CharField(blank=True, default='', max_length=36, db_index=True)
+    system_user = models.CharField(max_length=128, verbose_name=_("System user"), db_index=True)
+    system_user_id = models.CharField(blank=True, default='', max_length=36, db_index=True)
     login_from = models.CharField(max_length=2, choices=LOGIN_FROM_CHOICES, default="ST")
-    remote_addr = models.CharField(max_length=15, verbose_name=_("Remote addr"), blank=True, null=True)
-    is_finished = models.BooleanField(default=False)
+    remote_addr = models.CharField(max_length=128, verbose_name=_("Remote addr"), blank=True, null=True)
+    is_success = models.BooleanField(default=True, db_index=True)
+    is_finished = models.BooleanField(default=False, db_index=True)
     has_replay = models.BooleanField(default=False, verbose_name=_("Replay"))
     has_command = models.BooleanField(default=False, verbose_name=_("Command"))
     terminal = models.ForeignKey(Terminal, null=True, on_delete=models.SET_NULL)
-    protocol = models.CharField(choices=PROTOCOL_CHOICES, default='ssh', max_length=8)
-    date_last_active = models.DateTimeField(verbose_name=_("Date last active"), default=timezone.now)
+    protocol = models.CharField(choices=PROTOCOL_CHOICES, default='ssh', max_length=8, db_index=True)
     date_start = models.DateTimeField(verbose_name=_("Date start"), db_index=True, default=timezone.now)
     date_end = models.DateTimeField(verbose_name=_("Date end"), null=True)
 
@@ -211,6 +243,14 @@ class Session(OrgModelMixin):
             return True
         return False
 
+    @property
+    def can_join(self):
+        if self.is_finished:
+            return False
+        if self.protocol not in ['ssh', 'telnet', 'mysql']:
+            return False
+        return True
+
     def save_to_storage(self, f):
         local_path = self.get_local_path()
         try:
@@ -229,7 +269,7 @@ class Session(OrgModelMixin):
         return cls.objects.filter(is_finished=False)
 
     def is_active(self):
-        if self.protocol in ['ssh', 'telnet']:
+        if self.protocol in ['ssh', 'telnet', 'rdp', 'mysql']:
             key = self.ACTIVE_CACHE_KEY_PREFIX.format(self.id)
             return bool(cache.get(key))
         return True
@@ -242,6 +282,48 @@ class Session(OrgModelMixin):
     @property
     def login_from_display(self):
         return self.get_login_from_display()
+
+    @classmethod
+    def generate_fake(cls, count=100, is_finished=True):
+        import random
+        from orgs.models import Organization
+        from users.models import User
+        from assets.models import Asset, SystemUser
+        from orgs.utils import get_current_org
+        from common.utils.random import random_datetime, random_ip
+
+        org = get_current_org()
+        if not org or not org.is_real():
+            Organization.default().change_to()
+        i = 0
+        users = User.objects.all()[:100]
+        assets = Asset.objects.all()[:100]
+        system_users = SystemUser.objects.all()[:100]
+        while i < count:
+            user_random = random.choices(users, k=10)
+            assets_random = random.choices(assets, k=10)
+            system_users = random.choices(system_users, k=10)
+
+            ziped = zip(user_random, assets_random, system_users)
+            sessions = []
+            now = timezone.now()
+            month_ago = now - timezone.timedelta(days=30)
+            for user, asset, system_user in ziped:
+                ip = random_ip()
+                date_start = random_datetime(month_ago, now)
+                date_end = random_datetime(date_start, date_start+timezone.timedelta(hours=2))
+                data = dict(
+                    user=str(user), user_id=user.id,
+                    asset=str(asset), asset_id=asset.id,
+                    system_user=str(system_user), system_user_id=system_user.id,
+                    remote_addr=ip,
+                    date_start=date_start,
+                    date_end=date_end,
+                    is_finished=is_finished,
+                )
+                sessions.append(Session(**data))
+            cls.objects.bulk_create(sessions)
+            i += 10
 
     class Meta:
         db_table = "terminal_session"
@@ -282,3 +364,94 @@ class Command(AbstractSessionCommand):
     class Meta:
         db_table = "terminal_command"
         ordering = ('-timestamp',)
+
+
+class CommandStorage(CommonModelMixin):
+    TYPE_CHOICES = const.COMMAND_STORAGE_TYPE_CHOICES
+    TYPE_DEFAULTS = dict(const.REPLAY_STORAGE_TYPE_CHOICES_DEFAULT).keys()
+    TYPE_SERVER = const.COMMAND_STORAGE_TYPE_SERVER
+
+    name = models.CharField(max_length=32, verbose_name=_("Name"), unique=True)
+    type = models.CharField(
+        max_length=16, choices=TYPE_CHOICES, verbose_name=_('Type'),
+        default=TYPE_SERVER
+    )
+    meta = EncryptJsonDictTextField(default={})
+    comment = models.TextField(
+        max_length=128, default='', blank=True, verbose_name=_('Comment')
+    )
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def config(self):
+        config = self.meta
+        config.update({'TYPE': self.type})
+        return config
+
+    def in_defaults(self):
+        return self.type in self.TYPE_DEFAULTS
+
+    def is_valid(self):
+        if self.in_defaults():
+            return True
+        storage = jms_storage.get_log_storage(self.config)
+        return storage.ping()
+
+    def can_delete(self):
+        return not self.in_defaults()
+
+
+class ReplayStorage(CommonModelMixin):
+    TYPE_CHOICES = const.REPLAY_STORAGE_TYPE_CHOICES
+    TYPE_SERVER = const.REPLAY_STORAGE_TYPE_SERVER
+    TYPE_DEFAULTS = dict(const.REPLAY_STORAGE_TYPE_CHOICES_DEFAULT).keys()
+
+    name = models.CharField(max_length=32, verbose_name=_("Name"), unique=True)
+    type = models.CharField(
+        max_length=16, choices=TYPE_CHOICES, verbose_name=_('Type'),
+        default=TYPE_SERVER
+    )
+    meta = EncryptJsonDictTextField(default={})
+    comment = models.TextField(
+        max_length=128, default='', blank=True, verbose_name=_('Comment')
+    )
+
+    def __str__(self):
+        return self.name
+
+    def convert_type(self):
+        s3_type_list = [const.REPLAY_STORAGE_TYPE_CEPH]
+        tp = self.type
+        if tp in s3_type_list:
+            tp = const.REPLAY_STORAGE_TYPE_S3
+        return tp
+
+    def get_extra_config(self):
+        extra_config = {'TYPE': self.convert_type()}
+        if self.type == const.REPLAY_STORAGE_TYPE_SWIFT:
+            extra_config.update({'signer': 'S3SignerType'})
+        return extra_config
+
+    @property
+    def config(self):
+        config = self.meta
+        extra_config = self.get_extra_config()
+        config.update(extra_config)
+        return config
+
+    def in_defaults(self):
+        return self.type in self.TYPE_DEFAULTS
+
+    def is_valid(self):
+        if self.in_defaults():
+            return True
+        storage = jms_storage.get_object_storage(self.config)
+        target = 'tests.py'
+        src = os.path.join(settings.BASE_DIR, 'common', target)
+        return storage.is_valid(src, target)
+
+    def can_delete(self):
+        return not self.in_defaults()
+

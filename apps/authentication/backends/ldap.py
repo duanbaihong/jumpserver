@@ -165,4 +165,3 @@ class LDAPUser(_LDAPUser):
                 if name not in existing_group_names
             ]
             self._user.groups.set(existing_groups + new_groups)
-

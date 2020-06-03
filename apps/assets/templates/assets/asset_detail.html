@@ -3,9 +3,7 @@
 {% load i18n %}
 
 {% block custom_head_css_js %}
-    <link href='{% static "css/plugins/select2/select2.min.css" %}' rel="stylesheet">
     <link href='{% static "css/plugins/sweetalert/sweetalert.css" %}' rel="stylesheet">
-    <script src='{% static "js/plugins/select2/select2.full.min.js" %}'></script>
     <script src='{% static "js/plugins/sweetalert/sweetalert.min.js" %}'></script>
 {% endblock %}
 
@@ -270,16 +268,16 @@ function updateAssetNodes(nodes) {
 }
 
 function refreshAssetHardware() {
-    var the_url = "{% url 'api-assets:asset-refresh' pk=asset.id %}";
+    var the_url = "{% url 'api-assets:asset-task-create' pk=asset.id %}";
     var success = function(data) {
-        console.log(data);
         var task_id = data.task;
         showCeleryTaskLog(task_id);
     };
     requestApi({
         url: the_url,
         success: success,
-        method: 'GET'
+        data: {action: "refresh"},
+        method: 'POST'
     });
 }
 
@@ -347,16 +345,15 @@ $(document).ready(function () {
 }).on('click', '#btn_refresh_asset', function () {
     refreshAssetHardware()
 }).on('click', '#btn-test-is-alive', function () {
-    var the_url = "{% url 'api-assets:asset-alive-test' pk=asset.id %}";
-
+    var the_url = "{% url 'api-assets:asset-task-create' pk=asset.id %}";
     var success = function(data) {
         var task_id = data.task;
         showCeleryTaskLog(task_id);
     };
-
     requestApi({
         url: the_url,
-        method: 'GET',
+        method: 'POST',
+        data: {action: "test"},
         success: success
     });
 })

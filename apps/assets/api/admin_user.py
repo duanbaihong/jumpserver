@@ -14,7 +14,10 @@
 # limitations under the License.
 
 from django.db import transaction
+from django.db.models import Count
 from django.shortcuts import get_object_or_404
+from django.utils.translation import ugettext as _
+from rest_framework import status
 from rest_framework.response import Response
 from orgs.mixins.api import OrgBulkModelViewSet
 from orgs.mixins import generics
@@ -43,6 +46,19 @@ class AdminUserViewSet(OrgBulkModelViewSet):
     search_fields = filter_fields
     serializer_class = serializers.AdminUserSerializer
     permission_classes = (IsOrgAdmin,)
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.annotate(_assets_amount=Count('assets'))
+        return queryset
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        has_related_asset = instance.assets.exists()
+        if has_related_asset:
+            data = {'msg': _('Deleted failed, There are related assets')}
+            return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
+        return super().destroy(request, *args, **kwargs)
 
 
 class AdminUserAuthApi(generics.UpdateAPIView):

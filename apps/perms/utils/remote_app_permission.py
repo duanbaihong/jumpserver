@@ -1,6 +1,7 @@
 #  coding: utf-8
 #
 
+from django.utils.translation import ugettext as _
 from django.db.models import Q
 
 from common.tree import TreeNode
@@ -8,7 +9,6 @@ from orgs.utils import set_to_root_org
 
 from ..models import RemoteAppPermission
 from ..hands import RemoteApp, SystemUser
-
 
 __all__ = [
     'RemoteAppPermissionUtil',
@@ -56,7 +56,7 @@ class RemoteAppPermissionUtil:
     def get_remote_apps(self):
         remote_apps = RemoteApp.objects.filter(
             granted_by_permissions__in=self.permissions
-        )
+        ).distinct()
         return remote_apps
 
     def get_remote_app_system_users(self, remote_app):
@@ -73,7 +73,7 @@ class RemoteAppPermissionUtil:
 def construct_remote_apps_tree_root():
     tree_root = {
         'id': 'ID_REMOTE_APP_ROOT',
-        'name': 'RemoteApp',
+        'name': _('RemoteApp'),
         'title': 'RemoteApp',
         'pId': '',
         'open': False,

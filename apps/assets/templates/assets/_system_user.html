@@ -2,10 +2,6 @@
 {% load i18n %}
 {% load static %}
 {% load bootstrap3 %}
-{% block custom_head_css_js %}
-    <link href="{% static 'css/plugins/select2/select2.min.css' %}" rel="stylesheet">
-    <script src="{% static 'js/plugins/select2/select2.full.min.js' %}"></script>
-{% endblock %}
 
 {% block content %}
     <div class="wrapper wrapper-content animated fadeInRight">
@@ -25,7 +21,7 @@
                                 <i class="fa fa-times"></i>
                             </a>
                         </div>
-                    </div> 
+                    </div>
                     <div class="ibox-content">
                         <form enctype="multipart/form-data" method="post" class="form-horizontal" action="" >
                             {% csrf_token %}
@@ -38,6 +34,7 @@
                             {% bootstrap_field form.name layout="horizontal" %}
                             {% bootstrap_field form.login_mode layout="horizontal" %}
                             {% bootstrap_field form.username layout="horizontal" %}
+                            {% bootstrap_field form.username_same_with_user layout="horizontal" %}
                             {% bootstrap_field form.priority layout="horizontal" %}
                             {% bootstrap_field form.protocol layout="horizontal" %}
 
@@ -45,13 +42,9 @@
                             {% block auth %}
                             <div class="auto-generate">
                                 <div class="form-group">
-                                    <label for="{{ field.id_for_label }}" class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label">{% trans 'Auto generate key' %}</label>
-                                    <div class="col-bg-8 col-md-7 col-sm-7 col-xs-8">
-                                        <div class="checkbox">
-                                            <label>
-                                                {{ form.auto_generate_key}}
-                                            </label>
-                                        </div>
+                                    <label for="{{ form.auto_generate_key.id_for_label }}" class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label">{% trans 'Auto generate key' %}</label>
+                                    <div class="col-sm-8">
+                                        {{ form.auto_generate_key}}
                                     </div>
                                 </div>
                             </div>
@@ -60,13 +53,9 @@
                                 {% bootstrap_field form.private_key layout="horizontal" %}
                             </div>
                             <div class="form-group">
-                                <label for="{{ field.id_for_label }}" class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label">{% trans 'Auto push' %}</label>
-                                <div class="col-bg-8 col-md-7 col-sm-7 col-xs-8">
-                                    <div class="checkbox">
-                                        <label>
-                                            {{ form.auto_push}}
-                                        </label>
-                                    </div>
+                                <label for="{{ form.auto_push.id_for_label }}" class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label">{% trans 'Auto push' %}</label>
+                                <div class="col-sm-8">
+                                    {{ form.auto_push}}
                                 </div>
                             </div>
                             {% endblock %}
@@ -75,6 +64,7 @@
                                 {% bootstrap_field form.cmd_filters layout="horizontal" %}
                             </div>
                             <h3>{% trans 'Other' %}</h3>
+                            {% bootstrap_field form.sftp_root layout="horizontal" %}
                             {% bootstrap_field form.sudo layout="horizontal" %}
                             {% bootstrap_field form.shell layout="horizontal" %}
                             {% bootstrap_field form.comment layout="horizontal" %}
@@ -100,6 +90,7 @@ var auto_generate_key = '#'+'{{ form.auto_generate_key.id_for_label }}';
 var password_id = '#' + '{{ form.password.id_for_label }}';
 var private_key_id = '#' + '{{ form.private_key.id_for_label }}';
 var auto_push_id = '#' + '{{ form.auto_push.id_for_label }}';
+var command_filter_block_id = '#command-filter-block';
 var sudo_id = '#' + '{{ form.sudo.id_for_label }}';
 var shell_id = '#' + '{{ form.shell.id_for_label }}';
 
@@ -107,13 +98,13 @@ function autoLoginModeProtocol() {
     // 协议+自动登录模式字段控制
     $('#auth_title_id').removeClass('hidden');
     var protocol = $(protocol_id + " option:selected").text();
-    if (protocol === 'rdp') {
+    if (['rdp'].indexOf(protocol) !== -1) {
         authFieldsDisplay();
         $(auto_generate_key).closest('.form-group').removeClass('hidden');
         $(private_key_id).closest('.form-group').addClass('hidden');
         $(password_id).closest('.form-group').removeClass('hidden');
         $(auto_push_id).closest('.form-group').removeClass('hidden');
-        $('#command-filter-block').addClass('hidden');
+        $(command_filter_block_id).addClass('hidden');
         $(sudo_id).closest('.form-group').addClass('hidden');
         $(shell_id).closest('.form-group').addClass('hidden');
     }
@@ -123,7 +114,17 @@ function autoLoginModeProtocol() {
         $(private_key_id).closest('.form-group').addClass('hidden');
         $(password_id).closest('.form-group').removeClass('hidden');
         $(auto_push_id).closest('.form-group').addClass('hidden');
-        $('#command-filter-block').addClass('hidden');
+        $(command_filter_block_id).addClass('hidden');
+        $(sudo_id).closest('.form-group').addClass('hidden');
+        $(shell_id).closest('.form-group').addClass('hidden');
+    }
+    else if (protocol === 'mysql'){
+        $('.auth-fields').removeClass('hidden');
+        $(auto_generate_key).closest('.form-group').addClass('hidden');
+        $(private_key_id).closest('.form-group').addClass('hidden');
+        $(password_id).closest('.form-group').removeClass('hidden');
+        $(auto_push_id).closest('.form-group').addClass('hidden');
+        $(command_filter_block_id).removeClass('hidden');
         $(sudo_id).closest('.form-group').addClass('hidden');
         $(shell_id).closest('.form-group').addClass('hidden');
     }
@@ -133,7 +134,7 @@ function autoLoginModeProtocol() {
         $(private_key_id).closest('.form-group').addClass('hidden');
         $(password_id).closest('.form-group').removeClass('hidden');
         $(auto_push_id).closest('.form-group').addClass('hidden');
-        $('#command-filter-block').removeClass('hidden');
+        $(command_filter_block_id).removeClass('hidden');
         $(sudo_id).closest('.form-group').addClass('hidden');
         $(shell_id).closest('.form-group').addClass('hidden');
     }
@@ -143,7 +144,7 @@ function autoLoginModeProtocol() {
         $(private_key_id).closest('.form-group').removeClass('hidden');
         $(password_id).closest('.form-group').removeClass('hidden');
         $(auto_push_id).closest('.form-group').removeClass('hidden');
-        $('#command-filter-block').removeClass('hidden');
+        $(command_filter_block_id).removeClass('hidden');
         $(sudo_id).closest('.form-group').removeClass('hidden');
         $(shell_id).closest('.form-group').removeClass('hidden');
     }
@@ -153,23 +154,33 @@ function manualLoginModeProtocol() {
     // 协议+手动登录模式字段控制
     $('#auth_title_id').addClass('hidden');
     var protocol = $(protocol_id + " option:selected").text();
-    if (protocol === 'rdp') {
+    if (['rdp'].indexOf(protocol) !== -1) {
         $('.auth-fields').addClass('hidden');
         $(auto_generate_key).closest('.form-group').addClass('hidden');
         $(password_id).closest('.form-group').addClass('hidden');
         $(private_key_id).closest('.form-group').addClass('hidden');
         $(auto_push_id).closest('.form-group').addClass('hidden');
-        $('#command-filter-block').addClass('hidden');
+        $(command_filter_block_id).addClass('hidden');
         $(sudo_id).closest('.form-group').addClass('hidden');
         $(shell_id).closest('.form-group').addClass('hidden');
     }
-    else if (protocol === 'vnc') {
+    else if (protocol === 'vnc'){
         $('.auth-fields').addClass('hidden');
         $(auto_generate_key).closest('.form-group').addClass('hidden');
         $(password_id).closest('.form-group').addClass('hidden');
         $(private_key_id).closest('.form-group').addClass('hidden');
         $(auto_push_id).closest('.form-group').addClass('hidden');
-        $('#command-filter-block').addClass('hidden');
+        $(command_filter_block_id).addClass('hidden');
+        $(sudo_id).closest('.form-group').addClass('hidden');
+        $(shell_id).closest('.form-group').addClass('hidden');
+    }
+    else if (protocol === 'mysql'){
+        $('.auth-fields').addClass('hidden');
+        $(auto_generate_key).closest('.form-group').addClass('hidden');
+        $(password_id).closest('.form-group').addClass('hidden');
+        $(private_key_id).closest('.form-group').addClass('hidden');
+        $(auto_push_id).closest('.form-group').addClass('hidden');
+        $(command_filter_block_id).removeClass('hidden');
         $(sudo_id).closest('.form-group').addClass('hidden');
         $(shell_id).closest('.form-group').addClass('hidden');
     }
@@ -179,7 +190,7 @@ function manualLoginModeProtocol() {
         $(password_id).closest('.form-group').addClass('hidden');
         $(private_key_id).closest('.form-group').addClass('hidden');
         $(auto_push_id).closest('.form-group').addClass('hidden');
-        $('#command-filter-block').removeClass('hidden');
+        $(command_filter_block_id).removeClass('hidden');
         $(sudo_id).closest('.form-group').addClass('hidden');
         $(shell_id).closest('.form-group').addClass('hidden');
     }
@@ -189,7 +200,7 @@ function manualLoginModeProtocol() {
         $(password_id).closest('.form-group').addClass('hidden');
         $(private_key_id).closest('.form-group').addClass('hidden');
         $(auto_push_id).closest('.form-group').addClass('hidden');
-        $('#command-filter-block').removeClass('hidden');
+        $(command_filter_block_id).removeClass('hidden');
         $(sudo_id).closest('.form-group').removeClass('hidden');
         $(shell_id).closest('.form-group').removeClass('hidden');
     }
@@ -217,6 +228,10 @@ $(document).ready(function () {
     $('.select2').select2();
     authFieldsDisplay();
     fieldDisplay();
+    var checked = $("#id_username_same_with_user").prop('checked');
+    if (checked) {
+        $("#id_username").attr("disabled", true)
+    }
 })
 .on('change', auto_generate_key, function(){
     authFieldsDisplay();
@@ -237,7 +252,7 @@ $(document).ready(function () {
     var data = form.serializeObject();
 
     objectAttrsIsList(data, ['cmd_filters']);
-    objectAttrsIsBool(data, ["auto_generate_key", "auto_push"]);
+    objectAttrsIsBool(data, ["auto_generate_key", "auto_push", "username_same_with_user"]);
     data["private_key"] = $("#id_private_key").data('file');
 
     var props = {
@@ -252,6 +267,15 @@ $(document).ready(function () {
     readFile($(this)).on("onload", function (evt, data) {
          $(this).data("file", data)
     })
+}).on("change", '#id_username_same_with_user', function () {
+    var checked = $(this).prop('checked');
+    var usernameRef = $("#id_username");
+    if (checked) {
+        usernameRef.val('');
+        usernameRef.attr("disabled", true)
+    } else {
+        usernameRef.attr("disabled", false)
+    }
 })
 
 </script>

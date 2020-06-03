@@ -1,29 +1,25 @@
 # -*- coding: utf-8 -*-
 #
 
-import os
 import json
-import jms_storage
 
 from smtplib import SMTPSenderRefused
 from rest_framework import generics
 from rest_framework.views import Response, APIView
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import send_mail, get_connection
 from django.utils.translation import ugettext_lazy as _
 
-from .models import Setting
 from .utils import (
     LDAPServerUtil, LDAPCacheUtil, LDAPImportUtil, LDAPSyncUtil,
-    LDAP_USE_CACHE_FLAGS
-
+    LDAP_USE_CACHE_FLAGS, LDAPTestUtil,
 )
 from .tasks import sync_ldap_user_task
 from common.permissions import IsOrgAdmin, IsSuperUser
 from common.utils import get_logger
 from .serializers import (
-    MailTestSerializer, LDAPTestSerializer, LDAPUserSerializer,
-    PublicSettingSerializer,LDAPTestUserSerializer
+    MailTestSerializer, LDAPTestConfigSerializer, LDAPUserSerializer,
+    PublicSettingSerializer, LDAPTestLoginSerializer,LDAPTestUserSerializer
 )
 from users.models import User
 from authentication.backends.ldap import LDAPAuthorizationBackend
@@ -39,18 +35,33 @@ class MailTestingAPI(APIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
+            email_host = serializer.validated_data['EMAIL_HOST']
+            email_port = serializer.validated_data['EMAIL_PORT']
+            email_host_user = serializer.validated_data["EMAIL_HOST_USER"]
+            email_host_password = serializer.validated_data['EMAIL_HOST_PASSWORD']
             email_from = serializer.validated_data["EMAIL_FROM"]
             email_recipient = serializer.validated_data["EMAIL_RECIPIENT"]
-            email_host_user = serializer.validated_data["EMAIL_HOST_USER"]
-            for k, v in serializer.validated_data.items():
-                if k.startswith('EMAIL'):
-                    setattr(settings, k, v)
+            email_use_ssl = serializer.validated_data['EMAIL_USE_SSL']
+            email_use_tls = serializer.validated_data['EMAIL_USE_TLS']
+
+            # 设置 settings 的值，会导致动态配置在当前进程失效
+            # for k, v in serializer.validated_data.items():
+            #     if k.startswith('EMAIL'):
+            #         setattr(settings, k, v)
             try:
                 subject = "Test"
                 message = "Test smtp setting"
                 email_from = email_from or email_host_user
                 email_recipient = email_recipient or email_from
-                send_mail(subject, message,  email_from, [email_recipient])
+                connection = get_connection(
+                    host=email_host, port=email_port,
+                    uesrname=email_host_user, password=email_host_password,
+                    use_tls=email_use_tls, use_ssl=email_use_ssl,
+                )
+                send_mail(
+                    subject, message,  email_from, [email_recipient],
+                    connection=connection
+                )
             except SMTPSenderRefused as e:
                 resp = e.smtp_error
                 if isinstance(resp, bytes):
@@ -70,30 +81,55 @@ class MailTestingAPI(APIView):
             return Response({"error": str(serializer.errors)}, status=401)
 
 
-class LDAPTestingAPI(APIView):
-    permission_classes = (IsOrgAdmin,)
-    serializer_class = LDAPTestUserSerializer
-    success_message = _("Test ldap success")
+class LDAPTestingConfigAPI(APIView):
+    permission_classes = (IsSuperUser,)
+    serializer_class = LDAPTestConfigSerializer
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            ldap_username = serializer.validated_data["AUTH_LDAP_USER_NAME"]
-            ldap_password = serializer.validated_data["AUTH_LDAP_USERNAME_PASSWORD"]
-            local_user=User.objects.filter(username=ldap_username,source='local')
-            if local_user:
-                 return Response({"error":_('The current user [{}] is a local user and can not perform LDAP authentication login test!').format(ldap_username)},status=401)
-            users=LDAPAuthorizationBackend().authenticate(username=ldap_username,password=ldap_password)
-            if users != None:
-                return Response({"msg": _("Match users %(name)s(%(username)s),Groups [%(groups)s].")%({
-                    'name': users.name,
-                    'username': users.username,
-                    'groups': users.groups_display})
-                })
-            else:
-                return Response({"error": _("LDAP User {} Authentication Failed, Make sure the username or password is correct, or there are no find users").format(ldap_username)}, status=401)
-        else:
-            return Response({"error": serializer.errors}, status=401)
+        if not serializer.is_valid():
+            return Response({"error": str(serializer.errors)}, status=401)
+        config = self.get_ldap_config(serializer)
+        ok, msg = LDAPTestUtil(config).test_config()
+        status = 200 if ok else 401
+        return Response(msg, status=status)
+
+    @staticmethod
+    def get_ldap_config(serializer):
+        server_uri = serializer.validated_data["AUTH_LDAP_SERVER_URI"]
+        bind_dn = serializer.validated_data["AUTH_LDAP_BIND_DN"]
+        password = serializer.validated_data["AUTH_LDAP_BIND_PASSWORD"]
+        use_ssl = serializer.validated_data.get("AUTH_LDAP_START_TLS", False)
+        search_ou = serializer.validated_data["AUTH_LDAP_SEARCH_OU"]
+        search_filter = serializer.validated_data["AUTH_LDAP_SEARCH_FILTER"]
+        attr_map = serializer.validated_data["AUTH_LDAP_USER_ATTR_MAP"]
+        auth_ldap = serializer.validated_data.get('AUTH_LDAP', False)
+        config = {
+            'server_uri': server_uri,
+            'bind_dn': bind_dn,
+            'password': password,
+            'use_ssl': use_ssl,
+            'search_ou': search_ou,
+            'search_filter': search_filter,
+            'attr_map': attr_map,
+            'auth_ldap': auth_ldap
+        }
+        return config
+
+
+class LDAPTestingLoginAPI(APIView):
+    permission_classes = (IsSuperUser,)
+    serializer_class = LDAPTestLoginSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if not serializer.is_valid():
+            return Response({"error": str(serializer.errors)}, status=401)
+        username = serializer.validated_data['username']
+        password = serializer.validated_data['password']
+        ok, msg = LDAPTestUtil().test_login(username, password)
+        status = 200 if ok else 401
+        return Response(msg, status=status)
 
 
 class LDAPUserListApi(generics.ListAPIView):
@@ -225,99 +261,40 @@ class LDAPCacheRefreshAPI(generics.RetrieveAPIView):
         return Response(data={'msg': 'success'})
 
 
-class ReplayStorageCreateAPI(APIView):
-    permission_classes = (IsSuperUser,)
-
-    def post(self, request):
-        storage_data = request.data
-
-        if storage_data.get('TYPE') == 'ceph':
-            port = storage_data.get('PORT')
-            if port.isdigit():
-                storage_data['PORT'] = int(storage_data.get('PORT'))
-
-        storage_name = storage_data.pop('NAME')
-        data = {storage_name: storage_data}
-
-        if not self.is_valid(storage_data):
-            return Response({
-                "error": _("Error: Account invalid (Please make sure the "
-                           "information such as Access key or Secret key is correct)")},
-                status=401
-            )
-
-        Setting.save_storage('TERMINAL_REPLAY_STORAGE', data)
-        return Response({"msg": _('Create succeed')}, status=200)
-
-    @staticmethod
-    def is_valid(storage_data):
-        if storage_data.get('TYPE') == 'server':
-            return True
-        storage = jms_storage.get_object_storage(storage_data)
-        target = 'tests.py'
-        src = os.path.join(settings.BASE_DIR, 'common', target)
-        return storage.is_valid(src, target)
-
-
-class ReplayStorageDeleteAPI(APIView):
-    permission_classes = (IsSuperUser,)
-
-    def post(self, request):
-        storage_name = str(request.data.get('name'))
-        Setting.delete_storage('TERMINAL_REPLAY_STORAGE', storage_name)
-        return Response({"msg": _('Delete succeed')}, status=200)
-
-
-class CommandStorageCreateAPI(APIView):
-    permission_classes = (IsSuperUser,)
-
-    def post(self, request):
-        storage_data = request.data
-        storage_name = storage_data.pop('NAME')
-        data = {storage_name: storage_data}
-        if not self.is_valid(storage_data):
-            return Response(
-                {"error": _("Error: Account invalid (Please make sure the "
-                            "information such as Access key or Secret key is correct)")},
-                status=401
-            )
-
-        Setting.save_storage('TERMINAL_COMMAND_STORAGE', data)
-        return Response({"msg": _('Create succeed')}, status=200)
-
-    @staticmethod
-    def is_valid(storage_data):
-        if storage_data.get('TYPE') == 'server':
-            return True
-        try:
-            storage = jms_storage.get_log_storage(storage_data)
-        except Exception:
-            return False
-
-        return storage.ping()
-
-
-class CommandStorageDeleteAPI(APIView):
-    permission_classes = (IsSuperUser,)
-
-    def post(self, request):
-        storage_name = str(request.data.get('name'))
-        Setting.delete_storage('TERMINAL_COMMAND_STORAGE', storage_name)
-        return Response({"msg": _('Delete succeed')}, status=200)
-
-
 class PublicSettingApi(generics.RetrieveAPIView):
     permission_classes = ()
     serializer_class = PublicSettingSerializer
 
     def get_object(self):
-        c = settings.CONFIG
         instance = {
             "data": {
-                "WINDOWS_SKIP_ALL_MANUAL_PASSWORD": c.WINDOWS_SKIP_ALL_MANUAL_PASSWORD,
-                "SECURITY_MAX_IDLE_TIME": c.SECURITY_MAX_IDLE_TIME,
+                "WINDOWS_SKIP_ALL_MANUAL_PASSWORD": settings.WINDOWS_SKIP_ALL_MANUAL_PASSWORD,
+                "SECURITY_MAX_IDLE_TIME": settings.SECURITY_MAX_IDLE_TIME,
             }
         }
         return instance
 
+class LDAPTestingAPI(APIView):
+    permission_classes = (IsOrgAdmin,)
+    serializer_class = LDAPTestUserSerializer
+    success_message = _("Test ldap success")
 
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            ldap_username = serializer.validated_data["AUTH_LDAP_USER_NAME"]
+            ldap_password = serializer.validated_data["AUTH_LDAP_USERNAME_PASSWORD"]
+            local_user=User.objects.filter(username=ldap_username,source='local')
+            if local_user:
+                 return Response({"error":_('The current user [{}] is a local user and can not perform LDAP authentication login test!').format(ldap_username)},status=401)
+            users=LDAPAuthorizationBackend().authenticate(username=ldap_username,password=ldap_password)
+            if users != None:
+                return Response({"msg": _("Match users %(name)s(%(username)s),Groups [%(groups)s].")%({
+                    'name': users.name,
+                    'username': users.username,
+                    'groups': users.groups_display})
+                })
+            else:
+                return Response({"error": _("LDAP User {} Authentication Failed, Make sure the username or password is correct, or there are no find users").format(ldap_username)}, status=401)
+        else:
+            return Response({"error": serializer.errors}, status=401)

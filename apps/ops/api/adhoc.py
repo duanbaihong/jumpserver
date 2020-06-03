@@ -4,13 +4,14 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, generics
 from rest_framework.views import Response
+from django.db.models import Count, Q
 
 from common.permissions import IsOrgAdmin
 from common.serializers import CeleryTaskSerializer
 from orgs.utils import current_org
-from ..models import Task, AdHoc, AdHocRunHistory
+from ..models import Task, AdHoc, AdHocExecution
 from ..serializers import TaskSerializer, AdHocSerializer, \
-    AdHocRunHistorySerializer
+    AdHocExecutionSerializer
 from ..tasks import run_ansible_task
 
 __all__ = [
@@ -27,10 +28,7 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        if current_org.is_real():
-            queryset = queryset.filter(created_by=current_org.id)
-        else:
-            queryset = queryset.filter(created_by='')
+        queryset = queryset.select_related('latest_execution')
         return queryset
 
 
@@ -59,8 +57,8 @@ class AdHocViewSet(viewsets.ModelViewSet):
 
 
 class AdHocRunHistoryViewSet(viewsets.ModelViewSet):
-    queryset = AdHocRunHistory.objects.all()
-    serializer_class = AdHocRunHistorySerializer
+    queryset = AdHocExecution.objects.all()
+    serializer_class = AdHocExecutionSerializer
     permission_classes = (IsOrgAdmin,)
 
     def get_queryset(self):
