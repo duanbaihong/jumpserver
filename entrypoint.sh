@@ -9,4 +9,5 @@ if [ ! -s config.yml ]; then
     cat config_example.yml > config.yml
     printOK $?
 fi
+sleep 240
 exec ./jms start all 

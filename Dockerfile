@@ -3,7 +3,7 @@ MAINTAINER dbh888 <duanbaihong@qq.com>
 
 ENV LANG=zh_CN.UTF-8 LC_ALL=zh_CN.UTF-8 VERSION=1.4.6 \
 	EXT_PACKAGE="python3 py3-pip dumb-init sshpass libldap krb5-libs mariadb-connector-c libjpeg tiff cyrus-sasl freetype liblcms libwebp tcl xorgproto libuuid fontconfig libblkid libfdisk libmount libxft libxrender libxcb libxdmcp libxau" \
-	EXT_TMP_PACKAGE="make gcc g++ postgresql-dev mariadb-dev sqlite-dev libffi-dev tiff-dev jpeg-dev zlib-dev freetype-dev lcms-dev libwebp-dev tcl-dev tk-dev python3-dev libressl-dev openldap-dev cyrus-sasl-dev krb5-dev"
+	EXT_TMP_PACKAGE="make gcc g++ postgresql-dev mariadb-dev sqlite-dev libxslt-dev libxm2-dev libffi-dev tiff-dev jpeg-dev zlib-dev freetype-dev lcms-dev libwebp-dev tcl-dev tk-dev python3-dev libressl-dev openldap-dev cyrus-sasl-dev krb5-dev"
 
 COPY . /opt/jumpserver
 # ADD https://github.com/jumpserver/jumpserver/archive/${VERSION}.tar.gz /opt/jumpserver
