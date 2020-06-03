@@ -78,7 +78,6 @@ class LDAPSettingView(PermissionsMixin, TemplateView):
             'form': self.form_class(),
             'form_user': self.form_user_class(),
         }
-        logger.info(self.form_class())
         kwargs.update(context)
         return super().get_context_data(**kwargs)
 

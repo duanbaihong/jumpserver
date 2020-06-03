@@ -7,6 +7,7 @@ import threading
 import datetime
 import logging
 import logging.handlers
+import psutil
 import time
 import argparse
 import sys
@@ -19,28 +20,23 @@ from daemon import pidfile
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE_DIR)
 
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+
 try:
     from apps.jumpserver import const
     __version__ = const.VERSION
 except ImportError as e:
-    logging.info("Not found __version__: {}".format(e))
-    logging.info("Sys path: {}".format(sys.path))
-    logging.info("Python is: ")
+    print("Not found __version__: {}".format(e))
+    print("Python is: ")
     logging.info(subprocess.call('which python', shell=True))
     __version__ = 'Unknown'
-    try:
-        import apps
-        logging.info("List apps: {}".format(os.listdir('apps')))
-        logging.info('apps is: {}'.format(apps))
-    except:
-        pass
+    sys.exit(1)
 
 try:
-    from apps.jumpserver.conf import load_user_config
-    CONFIG = load_user_config()
+    from apps.jumpserver.const import CONFIG
 except ImportError as e:
-    logging.info("Import error: {}".format(e))
-    logging.info("Could not find config file, `cp config_example.yml config.yml`")
+    print("Import error: {}".format(e))
+    print("Could not find config file, `cp config_example.yml config.yml`")
     sys.exit(1)
 
 os.environ["PYTHONIOENCODING"] = "UTF-8"
@@ -356,6 +352,7 @@ def watch_services():
             rotate_log_if_need()
             time.sleep(30)
         except KeyboardInterrupt:
+            print("Start stop service") 
             time.sleep(1)
             break
     clean_up()
@@ -443,9 +440,17 @@ def stop_service(srv, sig=15):
         with LOCK:
             process = processes.pop(s, None)
         if process is None:
+            try:
+                process = psutil.Process(pid)
+            except:
+                pass
+        if process is None:
             print("\033[31m No process found\033[0m")
             continue
-        process.wait(1)
+        try:
+            process.wait(1)
+        except:
+            pass
         for i in range(STOP_TIMEOUT):
             if i == STOP_TIMEOUT - 1:
                 print("\033[31m Error\033[0m")
@@ -498,9 +503,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="""
         Jumpserver service control tools;
-
         Example: \r\n
-
         %(prog)s start all -d;
         """
     )
@@ -531,6 +534,7 @@ if __name__ == '__main__':
         start_services_and_watch(srv)
         os._exit(0)
     elif action == "stop":
+        print("Stop service")
         if args.force:
             stop_service_force(srv)
         else:
