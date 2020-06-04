@@ -22,7 +22,7 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
     && pip3 install --upgrade pip wheel \
     && pip3 install -r /opt/jumpserver/requirements/requirements.txt \
     && apk del ${DEP_PACKAGE} \
-    && rm -rf Dockerfile ~/.cache ${JUMPSERVER_INSTALL}/requirements \
+    && rm -rf ~/.cache ${JUMPSERVER_INSTALL}/requirements \
     && ln -sf /usr/bin/python3 /usr/bin/python 
 
 VOLUME ["${JUMPSERVER_INSTALL}/data","${JUMPSERVER_INSTALL}/logs","${JUMPSERVER_INSTALL}/conf"]
