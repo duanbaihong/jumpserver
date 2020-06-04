@@ -13,3 +13,4 @@ celerybeat.pid
 utils
 LICENSE
 conf
+config.yml

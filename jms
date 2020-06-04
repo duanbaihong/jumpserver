@@ -27,13 +27,14 @@ os.environ["PYTHONIOENCODING"] = "UTF-8"
 
 APPS_DIR = os.path.join(BASE_DIR, 'apps')
 TMP_DIR = os.path.join(BASE_DIR, 'tmp')
+LOG_DIR = os.path.join(BASE_DIR, 'logs')
 APPS_CONF_DIR= os.path.join(BASE_DIR, 'conf')
 APPS_CONF_FILE= os.path.join(APPS_CONF_DIR, 'config.yml')
 APPS_CONF_TEMPLATE = os.path.join(BASE_DIR, 'config_example.yml')
 APPLICATION_DIRS=[
     TMP_DIR,
+    LOG_DIR,
     APPS_CONF_DIR,
-    os.path.join(BASE_DIR, 'logs'),
     os.path.join(BASE_DIR, "data"),
     os.path.join(BASE_DIR, "data", "media"),
     os.path.join(BASE_DIR, "data", "media"),
