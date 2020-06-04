@@ -5,7 +5,7 @@ bcrypt==3.1.4
 billiard==3.5.0.3
 boto3==1.12.14
 botocore==1.15.26
-celery==4.1.1
+celery==4.4.4
 certifi==2018.1.18
 cffi==1.13.2
 chardet==3.0.4
@@ -59,7 +59,7 @@ python-dateutil==2.6.1
 python-gssapi==0.6.4
 pytz==2018.3
 PyYAML==5.1
-redis==2.10.6
+redis==3.2.0
 requests==2.22.0
 jms-storage==0.0.29
 s3transfer==0.3.3
@@ -97,4 +97,3 @@ huaweicloud-sdk-python==1.0.21
 django-redis==4.11.0
 python-redis-lock==3.5.0
 jumpserver-django-oidc-rp==0.3.7.4
-wheel==0.33.1

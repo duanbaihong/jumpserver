@@ -22,6 +22,32 @@ sys.path.insert(0, BASE_DIR)
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 
+
+os.environ["PYTHONIOENCODING"] = "UTF-8"
+
+APPS_DIR = os.path.join(BASE_DIR, 'apps')
+TMP_DIR = os.path.join(BASE_DIR, 'tmp')
+APPS_CONF_DIR= os.path.join(BASE_DIR, 'conf')
+APPS_CONF_FILE= os.path.join(APPS_CONF_DIR, 'config.yml')
+APPS_CONF_TEMPLATE = os.path.join(BASE_DIR, 'config_example.yml')
+APPLICATION_DIRS=[
+    TMP_DIR,
+    APPS_CONF_DIR,
+    os.path.join(BASE_DIR, 'logs'),
+    os.path.join(BASE_DIR, "data"),
+    os.path.join(BASE_DIR, "data", "media"),
+    os.path.join(BASE_DIR, "data", "media"),
+]
+# 创建应用目录
+for it in APPLICATION_DIRS:
+    if not os.path.exists(it):
+        os.mkdir(it)
+        
+# 生成默认配置文件
+if not os.path.exists(APPS_CONF_FILE) or not os.path.getsize(APPS_CONF_FILE):
+    if os.path.exists(APPS_CONF_TEMPLATE):
+        shutil.copy(APPS_CONF_TEMPLATE,APPS_CONF_FILE)
+
 try:
     from apps.jumpserver import const
     __version__ = const.VERSION
@@ -39,10 +65,6 @@ except ImportError as e:
     print("Could not find config file, `cp config_example.yml config.yml`")
     sys.exit(1)
 
-os.environ["PYTHONIOENCODING"] = "UTF-8"
-APPS_DIR = os.path.join(BASE_DIR, 'apps')
-LOG_DIR = os.path.join(BASE_DIR, 'logs')
-TMP_DIR = os.path.join(BASE_DIR, 'tmp')
 HTTP_HOST = CONFIG.HTTP_BIND_HOST or '127.0.0.1'
 HTTP_PORT = CONFIG.HTTP_LISTEN_PORT or 8080
 WS_PORT = CONFIG.WS_LISTEN_PORT or 8082
@@ -65,11 +87,6 @@ STOP_TIMEOUT = 10
 
 logger = logging.getLogger()
 
-try:
-    os.makedirs(os.path.join(BASE_DIR, "data", "static"))
-    os.makedirs(os.path.join(BASE_DIR, "data", "media"))
-except:
-    pass
 
 
 def check_database_connection():

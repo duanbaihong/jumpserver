@@ -1,13 +1,16 @@
 #!/usr/bin/dumb-init /bin/sh
+
 . init_jumpserver
 formatOutput title
-if [ ! -s config.yml ]; then
-    formatOutput "Fix File Permissions...."
-    chown root.root . -R
+
+id ${JUMPSERVER_USER} &>/dev/null 2>&1
+if [ $? -ne 0 ]; then
+    formatOutput "Initial ${JUMPSERVER} User [\033[31m${JUMPSERVER_USER}\033[0m]"
+    #statements
+    adduser -D -h ${JUMPSERVER_INSTALL} -s /sbin/nologin ${JUMPSERVER_USER} >& /dev/null;
     printOK $?
-    formatOutput "Generate configuration file config.yml...."
-    cat config_example.yml > config.yml
+    formatOutput "Repair work directory [${JUMPSERVER_INSTALL}] permissions...."
+    chown ${JUMPSERVER_USER}.${JUMPSERVER_USER} .  -R
     printOK $?
 fi
-sleep 240
-exec ./jms start all 
+su-exec ${JUMPSERVER_USER}:${JUMPSERVER_USER} jms start all 

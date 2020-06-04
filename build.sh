@@ -8,4 +8,4 @@ if [ -z "$version" ];then
 fi
 
 
-docker build -t jumpserver/jumpserver:$version .
+docker build -t 192.168.99.20/library/jumpserver:$version .

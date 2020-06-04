@@ -599,7 +599,7 @@ class ConfigManager:
         return False
 
     def load_from_yml(self):
-        for i in ['config.yml', 'config.yaml']:
+        for i in ['conf/config.yml', 'conf/config.yaml']:
             if not os.path.isfile(os.path.join(self.root_path, i)):
                 continue
             loaded = self.from_yaml(i)
