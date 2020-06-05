@@ -16,7 +16,7 @@
         <a href="#">
             <i class="fa fa-group" style="width: 14px"></i> <span class="nav-label">{% trans 'Users' %}</span><span class="fa arrow"></span>
         </a>
-        <ul class="nav nav-second-level collapse active">
+        <ul class="nav nav-second-level fade collapse active">
             <li id="user"><a href="{% url 'users:user-list' %}">{% trans 'User list' %}</a></li>
             <li id="user-group"><a href="{% url 'users:user-group-list' %}">{% trans 'User group' %}</a></li>
         </ul>
@@ -38,7 +38,7 @@
         <a>
             <i class="fa fa-inbox" style="width: 14px"></i> <span class="nav-label">{% trans 'Assets' %}</span><span class="fa arrow"></span>
         </a>
-        <ul class="nav nav-second-level collapse">
+        <ul class="nav nav-second-level fade collapse">
             <li id="asset"><a href="{% url 'assets:asset-list' %}">{% trans 'Asset list' %}</a></li>
             <li id="domain"><a href="{% url 'assets:domain-list' %}">{% trans 'Domain list' %}</a></li>
             <li id="admin-user"><a href="{% url 'assets:admin-user-list' %}">{% trans 'Admin user' %}</a></li>
@@ -59,7 +59,7 @@
         <a>
             <i class="fa fa-th" style="width: 14px"></i> <span class="nav-label">{% trans 'Applications' %}</span><span class="fa arrow"></span>
         </a>
-        <ul class="nav nav-second-level collapse">
+        <ul class="nav nav-second-level fade collapse">
             {% if LICENSE_VALID %}
             <li id="remote-app"><a href="{% url 'applications:remote-app-list' %}">{% trans 'RemoteApp' %}</a></li>
             {% endif %}
@@ -73,7 +73,7 @@
 {% if request.user.can_admin_current_org %}
     <li id="perms">
         <a href="#"><i class="fa fa-edit" style="width: 14px"></i> <span class="nav-label">{% trans 'Perms' %}</span><span class="fa arrow"></span></a>
-        <ul class="nav nav-second-level collapse">
+        <ul class="nav nav-second-level fade collapse">
             <li id="asset-permission">
                 <a href="{% url 'perms:asset-permission-list' %}">{% trans 'Asset permission' %}</a>
             </li>
@@ -96,7 +96,7 @@
         <a>
             <i class="fa fa-rocket" style="width: 14px"></i> <span class="nav-label">{% trans 'Sessions' %}</span><span class="fa arrow"></span>
         </a>
-        <ul class="nav nav-second-level collapse">
+        <ul class="nav nav-second-level fade collapse">
             <li id="session-online"><a href="{% url 'terminal:session-online-list' %}">{% trans 'Session online' %}</a></li>
             <li id="session-offline"><a href="{% url 'terminal:session-offline-list' %}">{% trans 'Session offline' %}</a></li>
             <li id="command"><a href="{% url 'terminal:command-list' %}">{% trans 'Commands' %}</a></li>
@@ -120,7 +120,7 @@
         <a>
             <i class="fa fa-coffee" style="width: 14px"></i> <span class="nav-label">{% trans 'Job Center' %}</span><span class="fa arrow"></span>
         </a>
-        <ul class="nav nav-second-level collapse">
+        <ul class="nav nav-second-level fade collapse">
             <li id="task"><a href="{% url 'ops:task-list' %}">{% trans 'Task list' %}</a></li>
             <li id="command-executions"><a href="{% url 'ops:command-execution-create' %}">{% trans 'Batch command' %}</a></li>
             {% if request.user.is_superuser %}
@@ -145,7 +145,7 @@
         <a>
             <i class="fa fa-history" style="width: 14px"></i> <span class="nav-label">{% trans 'Audits' %}</span><span class="fa arrow"></span>
         </a>
-        <ul class="nav nav-second-level collapse">
+        <ul class="nav nav-second-level fade collapse">
             <li id="login-log"><a href="{% url 'audits:login-log-list' %}">{% trans 'Login log' %}</a></li>
             <li id="ftp-log"><a href="{% url 'audits:ftp-log-list' %}">{% trans 'FTP log' %}</a></li>
             <li id="operate-log"><a href="{% url 'audits:operate-log-list' %}">{% trans 'Operate log' %}</a></li>
@@ -162,7 +162,7 @@
         <a>
             <i class="fa fa-sitemap" style="width: 14px"></i> <span class="nav-label">{% trans 'XPack' %}</span><span class="fa arrow"></span>
         </a>
-        <ul class="nav nav-second-level collapse">
+        <ul class="nav nav-second-level fade collapse">
             {% for plugin in XPACK_PLUGINS %}
                 {% ifequal plugin.name 'cloud'%}
                     <li id="{{ plugin.name }}">

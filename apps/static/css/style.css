@@ -8254,6 +8254,7 @@ body.md-skin {
 }
 .sidebar-collapse .nav > li > a{
   min-width: 150px;
+  transition: all .3s ease-out;
 }
 .mini-navbar .sidebar-collapse .nav > li > a{
   min-width: initial;
@@ -8264,6 +8265,3 @@ body.md-skin {
 .mini-navbar .sidebar-collapse .nav > li > a i {
   font-size: 20px;
 }
-.sidebar-collapse .nav > li.active>a {
-  margin-left: -4px;
-} 
