@@ -5726,6 +5726,10 @@ msgstr "密码不一致"
 msgid "Automatically configure and download the SSH key"
 msgstr "自动配置并下载SSH密钥"
 
+#: users/forms.py:250 users/forms/profile.py:116
+msgid "SSH public key from LDAP/AD cannot be automatically generated. If you need to regenerate it, please regenerate it in LDAP."
+msgstr "SSH 公钥来自 LDAP/AD 不能自动生成,如需要重新生成，请在LDAP里重新生成。"
+
 #: users/forms.py:254 users/forms/profile.py:120
 msgid "Paste your id_rsa.pub here."
 msgstr "复制你的公钥到这里"

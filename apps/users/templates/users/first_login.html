@@ -71,13 +71,13 @@
                               {% else %}
                                   {% bootstrap_form wizard.form %}
                               {% endif %}
-
-                              {% if form.mfa_description %}
+                              {% if request.user.source == 'ldap' and request.user.public_key != '' and  wizard.steps.current == '1' %}
+                                 <b>{% trans "SSH public key from LDAP/AD cannot be automatically generated. If you need to regenerate it, please regenerate it in LDAP." %}</b>
+                              {% elif form.mfa_description %}
                                   <b>{{ form.mfa_description }}</b>
                               {% endif %}
-
-                              {% if form.pubkey_description and request.user.can_update_ssh_key %}
-                                  <a type="button" id="btn-reset-pubkey">{{ form.pubkey_description }}</a>
+                              {% if form.pubkey_description and request.user.can_update_ssh_key and request.user.source != 'ldap' or request.user.public_key == ''  %}
+                                  <a type="button" id="btn-reset-pubkey" class="btn btn-info">{{ form.pubkey_description }}</a>
                               {% endif %}
                           </form>
                           <div class="col-sm-4">

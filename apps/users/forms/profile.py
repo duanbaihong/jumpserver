@@ -6,6 +6,8 @@ from captcha.fields import CaptchaField
 
 from common.utils import validate_ssh_public_key
 from ..models import User
+from common.utils import get_logger
+logger = get_logger(__name__)
 
 
 __all__ = [
@@ -119,20 +121,24 @@ class UserPublicKeyForm(forms.Form):
         widget=forms.Textarea(attrs={'placeholder': _('ssh-rsa AAAA...')}),
         help_text=_('Paste your id_rsa.pub here.')
     )
-
     def __init__(self, *args, **kwargs):
         if 'instance' in kwargs:
             self.instance = kwargs.pop('instance')
+            kwargs['initial'].update(public_key=self.instance.public_key)
+            if self.instance.source == 'ldap' and self.instance.public_key != '':
+                self.base_fields['public_key'].widget.attrs.update(readonly=True)
+            elif 'readonly' in self.base_fields['public_key'].widget.attrs:
+                del self.base_fields['public_key'].widget.attrs['readonly']
         else:
             self.instance = None
+        
         super().__init__(*args, **kwargs)
 
     def clean_public_key(self):
         public_key = self.cleaned_data['public_key']
-        if self.instance.public_key and public_key == self.instance.public_key:
+        if self.instance.public_key and public_key == self.instance.public_key and self.instance.source != 'ldap':
             msg = _('Public key should not be the same as your old one.')
             raise forms.ValidationError(msg)
-
         if public_key and not validate_ssh_public_key(public_key):
             raise forms.ValidationError(_('Not a valid ssh public key'))
         return public_key

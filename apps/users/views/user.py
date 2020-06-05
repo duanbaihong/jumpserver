@@ -101,6 +101,13 @@ class UserUpdateView(PermissionsMixin, SuccessMessageMixin, UpdateView):
         return not self.request.user.is_superuser and obj.is_superuser
 
     def get(self, request, *args, **kwargs):
+        tmp_user = self.get_object()
+        tmp_form_sshkey=self.form_class.base_fields['public_key']
+        if tmp_user.source == 'ldap' and tmp_user.public_key !='':
+            tmp_form_sshkey.widget.attrs.update(readonly=True)
+        elif 'readonly' in tmp_form_sshkey.widget.attrs:
+            del tmp_form_sshkey.widget.attrs['readonly']
+
         if self._deny_permission():
             return redirect(self.success_url)
         return super().get(request, *args, **kwargs)

@@ -102,8 +102,8 @@
             <li id="command"><a href="{% url 'terminal:command-list' %}">{% trans 'Commands' %}</a></li>
 
             {% if request.user.can_admin_current_org %}
-                <li><a href="{% url 'terminal:web-terminal' %}" target="_blank"><span class="nav-label">{% trans 'Web terminal' %}</span></a></li>
-                <li><a href="{% url 'terminal:web-sftp' %}" target="_blank"><span class="nav-label">{% trans 'File manager' %}</span></a></li>
+                <li><a href="{% url 'terminal:web-terminal' %}" target="_blank">{% trans 'Web terminal' %}</a></li>
+                <li><a href="{% url 'terminal:web-sftp' %}" target="_blank">{% trans 'File manager' %}</a></li>
             {% endif %}
 
             {% if request.user.is_superuser %}

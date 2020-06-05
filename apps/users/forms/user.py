@@ -9,7 +9,8 @@ from ..utils import (
     check_password_rules, get_current_org_members, get_source_choices
 )
 
-
+from common.utils import get_logger
+logger = get_logger(__name__)
 __all__ = [
     'UserCreateForm', 'UserUpdateForm', 'UserBulkUpdateForm',
     'UserCheckOtpCodeForm', 'UserCheckPasswordForm'
@@ -41,7 +42,7 @@ class UserCreateUpdateFormMixin(OrgModelForm):
         fields = [
             'username', 'name', 'email', 'groups', 'wechat',
             'source', 'phone', 'role', 'date_expired',
-            'comment', 'mfa_level'
+            'comment', 'mfa_level','public_key'
         ]
         widgets = {
             'mfa_level': forms.RadioSelect(),
@@ -82,7 +83,7 @@ class UserCreateUpdateFormMixin(OrgModelForm):
         public_key = self.cleaned_data['public_key']
         if not public_key:
             return public_key
-        if self.instance.public_key and public_key == self.instance.public_key:
+        if self.instance.public_key and public_key == self.instance.public_key and self.instance.source!='ldap':
             msg = _('Public key should not be the same as your old one.')
             raise forms.ValidationError(msg)
 

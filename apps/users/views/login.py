@@ -19,7 +19,8 @@ from ..utils import (
     send_reset_password_mail, get_password_check_rules, check_password_rules
 )
 from .. import forms
-
+# from common.utils import get_logger
+# logger = get_logger(__name__)
 
 __all__ = [
     'UserLoginView', 'UserForgotPasswordSendmailSuccessView',
@@ -172,6 +173,12 @@ class UserFirstLoginView(PermissionsMixin, SessionWizardView):
                 'email': user.email or '',
                 'wechat': user.wechat or '',
                 'phone': user.phone or ''
+            }
+        if step == '1':
+            if self.request.user.source == 'ldap' and self.request.user.public_key != '':
+                self.form_list['1'].base_fields['public_key'].widget.attrs.update(readonly=True)
+            return {
+                'public_key': user.public_key or '',
             }
         return super().get_form_initial(step)
 

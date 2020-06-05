@@ -54,26 +54,28 @@
                                     {% csrf_token %}
                                     <h3>{% trans 'Old public key' %}</h3>
                                     <div class="form-group">
-                                        <label class="control-label col-sm-2 col-lg-2" style="padding-top: 0" >{% trans 'Name' %}</label>
+                                        <label class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label" style="padding-top: 0" >{% trans 'Name' %}</label>
                                         <div class=" col-sm-9 col-lg-9">
                                             <label>{{ user.public_key_obj.comment }}</label>
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label class="control-label col-sm-2 col-lg-2" style="padding-top: 0">{% trans 'Fingerprint' %}</label>
-                                        <div class=" col-sm-9 col-lg-9 ">
+                                        <label class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label" style="padding-top: 0">{% trans 'Fingerprint' %}</label>
+                                        <div class="col-bg-8 col-md-7 col-sm-7 col-xs-8">
                                             <label>{{ user.public_key_obj.hash_md5 }}</label>
                                         </div>
                                     </div>
                                     <div class="hr-line-dashed"></div>
                                     <h3>{% trans 'Update public key' %}</h3>
                                     {% bootstrap_field form.public_key layout="horizontal" %}
+                                    {% if user.source != 'ldap' or user.public_key == '' %}
                                     <div class="form-group">
-                                        <label class="control-label col-sm-2 col-lg-2" style="padding-top: 0">{% trans 'Or reset by server' %}</label>
-                                        <div class=" col-sm-9 col-lg-9 ">
-                                            <a id="reset_pubkey" href="{% url 'users:user-pubkey-generate' %}">{% trans 'Reset' %}</a>
+                                        <label class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label" style="padding-top: 0">{% trans 'Or reset by server' %}</label>
+                                        <div class="col-bg-8 col-md-7 col-sm-7 col-xs-8">
+                                            <a id="reset_pubkey" class="btn btn-info btn-xs" href="{% url 'users:user-pubkey-generate' %}">{% trans 'Reset' %}</a>
                                         </div>
                                     </div>
+                                    {% endif %}
                                     <div class="hr-line-dashed"></div>
                                     <div class="form-group">
                                         <div class="col-sm-4 col-sm-offset-2">

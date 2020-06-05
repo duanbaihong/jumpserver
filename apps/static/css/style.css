@@ -51,7 +51,7 @@ h5 {
 }
 .navbar-default .nav > li > a:hover,
 .navbar-default .nav > li > a:focus {
-  background-color: #293846;
+  background-color: #384e63;
   color: white;
 }
 .nav .open > a,
@@ -168,7 +168,7 @@ h5 {
 }
 .nav > li.active {
   border-left: 4px solid #19aa8d;
-  background: #293846;
+  background: #485969;
 }
 .nav.nav-second-level > li.active {
   border: none;
@@ -8258,3 +8258,12 @@ body.md-skin {
 .mini-navbar .sidebar-collapse .nav > li > a{
   min-width: initial;
 }
+.sidebar-collapse .nav > li > a i{
+  transition: all .3s ease-in-out;
+}
+.mini-navbar .sidebar-collapse .nav > li > a i {
+  font-size: 20px;
+}
+.sidebar-collapse .nav > li.active>a {
+  margin-left: -4px;
+} 

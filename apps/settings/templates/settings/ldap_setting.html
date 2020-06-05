@@ -92,7 +92,7 @@
                                                     <form id='ldap_test' action="" method="post" >
                                                         {% csrf_token %}
                                                         {% for field in form_user %}
-                                                            {% bootstrap_field field size='medium' label_class='col-md-4' field_class='col-md-7' layout="horizontal" %}
+                                                            {% bootstrap_field field size='medium' label_class='col-md-4 col-sm-4' field_class='col-md-7 col-sm-7' layout="horizontal" %}
                                                         {% endfor %}
                                                     </form>
                                                 </div>
