@@ -125,7 +125,7 @@ class UserPublicKeyForm(forms.Form):
         if 'instance' in kwargs:
             self.instance = kwargs.pop('instance')
             kwargs['initial'].update(public_key=self.instance.public_key)
-            if self.instance.source == 'ldap' and self.instance.public_key != '':
+            if self.instance.source == 'ldap' and self.instance.public_key not in ('',None):
                 self.base_fields['public_key'].widget.attrs.update(readonly=True)
             elif 'readonly' in self.base_fields['public_key'].widget.attrs:
                 del self.base_fields['public_key'].widget.attrs['readonly']

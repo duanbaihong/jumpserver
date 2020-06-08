@@ -103,7 +103,7 @@ class UserUpdateView(PermissionsMixin, SuccessMessageMixin, UpdateView):
     def get(self, request, *args, **kwargs):
         tmp_user = self.get_object()
         tmp_form_sshkey=self.form_class.base_fields['public_key']
-        if tmp_user.source == 'ldap' and tmp_user.public_key !='':
+        if tmp_user.source == 'ldap' and tmp_user.public_key not in ('',None):
             tmp_form_sshkey.widget.attrs.update(readonly=True)
         elif 'readonly' in tmp_form_sshkey.widget.attrs:
             del tmp_form_sshkey.widget.attrs['readonly']
