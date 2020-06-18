@@ -63,8 +63,8 @@ class Gateway(BaseUser):
     def test_connective(self, local_port=None):
         if local_port is None:
             local_port = self.port
-        if self.password and not re.match(r'\w+$', self.password):
-            return False, _("Password should not contain special characters")
+        # if self.password and not re.match(r'\w+$', self.password):
+        #     return False, _("Password should not contain special characters")
 
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())

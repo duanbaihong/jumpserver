@@ -22,7 +22,7 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
     && pip3 install --upgrade pip wheel \
     && pip3 install -r /opt/jumpserver/requirements/requirements.txt \
     && apk del ${DEP_PACKAGE} \
-    && pip3 uninstall wheel \
+    && pip3 uninstall wheel -y \
     && rm -rf ~/.cache ${JUMPSERVER_INSTALL}/requirements \
     && ln -sf /usr/bin/python3 /usr/bin/python 
 

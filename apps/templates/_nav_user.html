@@ -13,13 +13,13 @@
         {% if LICENSE_VALID %}
         <li id="user-remote-app">
             <a href="{% url 'applications:user-remote-app-list' %}">
-                <i class="" style="width: 14px"></i><span class="nav-label">{% trans 'RemoteApp' %}</span><span class="label label-info pull-right"></span>
+                <b >{% trans 'RemoteApp' %}</b><span class="label label-info pull-right"></span>
             </a>
         </li>
         {% endif %}
         <li id="user-database-app">
             <a href="{% url 'applications:user-database-app-list' %}">
-                <i class="" style="width: 14px"></i><span class="nav-label">{% trans 'DatabaseApp' %}</span><span class="label label-info pull-right"></span>
+                <b >{% trans 'DatabaseApp' %}</b><span class="label label-info pull-right"></span>
             </a>
         </li>
     </ul>
