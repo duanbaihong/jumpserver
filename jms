@@ -20,7 +20,8 @@ from daemon import pidfile
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE_DIR)
 
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+logging.basicConfig(level=logging.DEBUG,
+                    format="%(asctime)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 
 
 os.environ["PYTHONIOENCODING"] = "UTF-8"
@@ -28,10 +29,10 @@ os.environ["PYTHONIOENCODING"] = "UTF-8"
 APPS_DIR = os.path.join(BASE_DIR, 'apps')
 TMP_DIR = os.path.join(BASE_DIR, 'tmp')
 LOG_DIR = os.path.join(BASE_DIR, 'logs')
-APPS_CONF_DIR= os.path.join(BASE_DIR, 'conf')
-APPS_CONF_FILE= os.path.join(APPS_CONF_DIR, 'config.yml')
+APPS_CONF_DIR = os.path.join(BASE_DIR, 'conf')
+APPS_CONF_FILE = os.path.join(APPS_CONF_DIR, 'config.yml')
 APPS_CONF_TEMPLATE = os.path.join(BASE_DIR, 'config_example.yml')
-APPLICATION_DIRS=[
+APPLICATION_DIRS = [
     TMP_DIR,
     LOG_DIR,
     APPS_CONF_DIR,
@@ -43,11 +44,11 @@ APPLICATION_DIRS=[
 for it in APPLICATION_DIRS:
     if not os.path.exists(it):
         os.mkdir(it)
-        
+
 # 生成默认配置文件
 if not os.path.exists(APPS_CONF_FILE) or not os.path.getsize(APPS_CONF_FILE):
     if os.path.exists(APPS_CONF_TEMPLATE):
-        shutil.copy(APPS_CONF_TEMPLATE,APPS_CONF_FILE)
+        shutil.copy(APPS_CONF_TEMPLATE, APPS_CONF_FILE)
 
 try:
     from apps.jumpserver import const
@@ -89,12 +90,12 @@ STOP_TIMEOUT = 10
 logger = logging.getLogger()
 
 
-
 def check_database_connection():
     os.chdir(os.path.join(BASE_DIR, 'apps'))
     for i in range(60):
         logging.info("Check database connection ...")
-        code = subprocess.call("python manage.py showmigrations users ", shell=True)
+        code = subprocess.call(
+            "python manage.py showmigrations users ", shell=True)
         if code == 0:
             logging.info("Database connect success")
             return
@@ -289,7 +290,8 @@ def get_start_beat_kwargs():
         '-A', 'ops',
         '-l', 'INFO',
         '--scheduler', scheduler,
-        '--max-interval', '60'
+        '--max-interval', '60',
+        '--pidfile',"%s/celerybeat.pid"%TMP_DIR
     ]
     return {"cmd": cmd, 'cwd': APPS_DIR}
 
@@ -352,12 +354,14 @@ def watch_services():
 
             pre_log_path = os.path.join(pre_log_dir, filename)
             if os.path.isfile(log_path) and not os.path.isfile(pre_log_path):
-                logging.info("Rotate log file: {} => {}".format(log_path, pre_log_path))
+                logging.info("Rotate log file: {} => {}".format(
+                    log_path, pre_log_path))
                 shutil.copy(log_path, pre_log_path)
                 with open(log_path, 'w') as f:
                     pass
         some_days_ago = now - datetime.timedelta(days=LOG_KEEP_DAYS)
-        days_ago_dir = os.path.join(LOG_DIR, some_days_ago.strftime('%Y-%m-%d'))
+        days_ago_dir = os.path.join(
+            LOG_DIR, some_days_ago.strftime('%Y-%m-%d'))
         if os.path.exists(days_ago_dir):
             logger.info("Remove old log: {}".format(days_ago_dir))
             shutil.rmtree(days_ago_dir, ignore_errors=True)
@@ -370,7 +374,7 @@ def watch_services():
             rotate_log_if_need()
             time.sleep(30)
         except KeyboardInterrupt:
-            print("Start stop service") 
+            print("Start stop service")
             time.sleep(1)
             break
     clean_up()
@@ -532,7 +536,8 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         "service", type=str, default="all", nargs="?",
-        choices=("all", "web", "task", "gunicorn", "celery", "beat", "celery,beat", "flower", "ws"),
+        choices=("all", "web", "task", "gunicorn", "celery",
+                 "beat", "celery,beat", "flower", "ws"),
         help="The service to start",
     )
     parser.add_argument('-d', '--daemon', nargs="?", const=1)
