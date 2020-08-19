@@ -31,7 +31,7 @@ TMP_DIR = os.path.join(BASE_DIR, 'tmp')
 LOG_DIR = os.path.join(BASE_DIR, 'logs')
 APPS_CONF_DIR = os.path.join(BASE_DIR, 'conf')
 APPS_CONF_FILE = os.path.join(APPS_CONF_DIR, 'config.yml')
-APPS_CONF_TEMPLATE = os.path.join(BASE_DIR, 'config_example.yml')
+APPS_CONF_TEMPLATE = os.path.join(APPS_CONF_DIR, 'config_example.yml')
 APPLICATION_DIRS = [
     TMP_DIR,
     LOG_DIR,
@@ -291,7 +291,7 @@ def get_start_beat_kwargs():
         '-l', 'INFO',
         '--scheduler', scheduler,
         '--max-interval', '60',
-        '--pidfile',"%s/celerybeat.pid"%TMP_DIR
+        '--pidfile', "%s/celerybeat.pid" % TMP_DIR
     ]
     return {"cmd": cmd, 'cwd': APPS_DIR}
 

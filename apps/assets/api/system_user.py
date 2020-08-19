@@ -14,7 +14,8 @@ from ..tasks import (
     push_system_user_to_assets_manual, test_system_user_connectivity_manual,
     push_system_user_a_asset_manual,
 )
-
+from django.contrib.auth import get_user_model
+Users=get_user_model()
 
 logger = get_logger(__file__)
 __all__ = [
@@ -68,13 +69,24 @@ class SystemUserAssetAuthInfoApi(generics.RetrieveAPIView):
     def get_object(self):
         instance = super().get_object()
         username = instance.username
-        if instance.username_same_with_user:
-            username = self.request.query_params.get("username")
         asset_id = self.kwargs.get('aid')
         asset = get_object_or_404(Asset, pk=asset_id)
-
+        user_obj=None
+        if instance.username_same_with_user:
+            username = self.request.query_params.get("username")
+            userid = self.request.query_params.get("user_id")
+            query_field={}
+            if userid and username:
+                query_field[Users.USERNAME_FIELD]=username
+                query_field['id']=userid
+                user_obj=Users.objects.filter(**query_field).first()
+       
         with tmp_to_org(asset.org_id):
             instance.load_asset_special_auth(asset=asset, username=username)
+            if user_obj:
+                instance.password=user_obj.password
+                instance.public_key=user_obj.public_key
+                instance.private_key=user_obj.private_key
             return instance
 
 
@@ -99,7 +111,10 @@ class SystemUserTaskApi(generics.CreateAPIView):
 
     def get_object(self):
         pk = self.kwargs.get('pk')
-        return get_object_or_404(SystemUser, pk=pk)
+        system_user=get_object_or_404(SystemUser, pk=pk)
+        logger.info(dir(system_user))
+        logger.info(system_user)
+        return system_user
 
     def perform_create(self, serializer):
         action = serializer.validated_data["action"]

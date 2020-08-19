@@ -175,7 +175,7 @@ class UserFirstLoginView(PermissionsMixin, SessionWizardView):
                 'phone': user.phone or ''
             }
         if step == '1':
-            if self.request.user.source == 'ldap' and self.request.user.public_key != '':
+            if self.request.user.source == User.SOURCE_LDAP and self.request.user.public_key != '':
                 self.form_list['1'].base_fields['public_key'].widget.attrs.update(readonly=True)
             return {
                 'public_key': user.public_key or '',

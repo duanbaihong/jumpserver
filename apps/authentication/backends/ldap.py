@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from django_auth_ldap.backend import _LDAPUser, LDAPBackend
 from django_auth_ldap.config import _LDAPConfig, LDAPSearch, LDAPSearchUnion, PosixGroupType, GroupOfNamesType, GroupOfUniqueNamesType, OrganizationalRoleGroupType, NestedGroupOfNamesType, NestedGroupOfUniqueNamesType, NestedOrganizationalRoleGroupType
-from users.models import UserGroup
+from users.models import UserGroup,User
 from users.models.user import RoleMixin
 from common.utils import validate_ssh_public_key
 # get_signer,
@@ -100,15 +100,6 @@ class LDAPUser(_LDAPUser):
 
     def _populate_user_from_attributes(self):
         super()._populate_user_from_attributes()
-        # if hasattr(self._user,'public_key') and getattr(self._user,'public_key') != "":
-        #     if(validate_ssh_public_key(getattr(self._user,'public_key'))):
-        #         signer = get_signer()
-        #         public_key_sign=signer.sign(self._user.public_key)
-        #         setattr(self._user,'public_key',self._user.public_key)
-        #     else:
-        #         setattr(self._user,'public_key','')
-        #         logger.error("The public key obtained from LDAP is invalid and the \"public_key\" field mapping is skipped.")
-
         if not hasattr(self._user, 'email') or '@' not in self._user.email:
             email = '{}@{}'.format(self._user.username, settings.EMAIL_SUFFIX)
             setattr(self._user, 'email', email)
@@ -121,6 +112,7 @@ class LDAPUser(_LDAPUser):
                 setattr(self._user,'role',RoleMixin.ROLE_ADMIN)
             else:
                 setattr(self._user,'role',RoleMixin.ROLE_USER)
+            setattr(self._user,'source',User.SOURCE_LDAP)
             self._user.save()
             if not self.settings.MIRROR_GROUPS:
                 new_groups = UserGroup.objects.filter(name__in=target_group_names)
