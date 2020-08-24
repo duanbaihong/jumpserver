@@ -138,23 +138,6 @@ $(document).ready(function(){
     authAssetId = $(this).data("asset");
     $("#asset_user_auth_update_modal").modal('show');
 })
-.on("click", '.btn-test-auth', function () {
-    authUid = $(this).data('uid');
-    var theUrl = "{% url 'api-assets:asset-user-task-create'%}?id={{ DEFAULT_PK }}"
-        .replace("{{ DEFAULT_PK }}", authUid);
-
-    var success = function (data) {
-        var taskId = data.task;
-        showCeleryTaskLog(taskId);
-    };
-    requestApi({
-        url: theUrl,
-        method: 'POST',
-        data: JSON.stringify({action: 'test'}),
-        success: success,
-        flash_message: false
-    });
-})
 .on('click', '.btn-del-auth', function () {
     var uid = $(this).data("uid");
     var theUrl = defaultAssetUserDetail.replace("{{ DEFAULT_PK }}", uid);

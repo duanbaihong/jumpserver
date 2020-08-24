@@ -12,6 +12,8 @@ from . import const
 from .utils import (
     clean_ansible_task_hosts, group_asset_by_platform
 )
+from django.contrib.auth import get_user_model
+Users=get_user_model()
 
 logger = get_logger(__name__)
 __all__ = [
@@ -21,7 +23,7 @@ __all__ = [
 
 
 @org_aware_func("system_user")
-def test_system_user_connectivity_util(system_user, assets, task_name):
+def test_system_user_connectivity_util(system_user, assets, task_name,username=None):
     """
     Test system cant connect his assets or not.
     :param system_user:
@@ -81,11 +83,15 @@ def test_system_user_connectivity_util(system_user, assets, task_name):
             logger.debug("System user not has special auth")
             run_task(tasks, _hosts, system_user.username)
         # 否则需要多个任务
-        else:
-            users = system_user.users.all().values_list('username', flat=True)
-            print(_("System user is dynamic: {}").format(list(users)))
-            for username in users:
+        else: 
+            if username:
+                print(_("System user is dynamic: {}").format(username))
                 run_task(tasks, _hosts, username)
+            else:
+                users = system_user.users.all().values_list('username', flat=True)
+                print(_("System user is dynamic: {}").format(list(users)))
+                for username in users:
+                    run_task(tasks, _hosts, username)
 
     system_user.set_connectivity(results_summary)
     return results_summary
@@ -101,11 +107,11 @@ def test_system_user_connectivity_manual(system_user):
 
 @shared_task(queue="ansible")
 @org_aware_func("system_user")
-def test_system_user_connectivity_a_asset(system_user, asset):
+def test_system_user_connectivity_a_asset(system_user, asset,username):
     task_name = _("Test system user connectivity: {} => {}").format(
         system_user, asset
     )
-    test_system_user_connectivity_util(system_user, [asset], task_name)
+    test_system_user_connectivity_util(system_user, [asset], task_name,username)
 
 
 @shared_task(queue="ansible")

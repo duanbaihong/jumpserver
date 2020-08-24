@@ -12,7 +12,7 @@ from .. import serializers
 from ..serializers import SystemUserWithAuthInfoSerializer
 from ..tasks import (
     push_system_user_to_assets_manual, test_system_user_connectivity_manual,
-    push_system_user_a_asset_manual,
+    push_system_user_a_asset_manual,test_system_user_connectivity_a_asset
 )
 from django.contrib.auth import get_user_model
 Users=get_user_model()
@@ -104,17 +104,18 @@ class SystemUserTaskApi(generics.CreateAPIView):
             )
         return task
 
-    @staticmethod
-    def do_test(system_user, asset=None):
-        task = test_system_user_connectivity_manual.delay(system_user)
+    # @staticmethod
+    def do_test(self, system_user, asset=None):
+        if asset:
+            username = self.request.query_params.get('username')
+            task = test_system_user_connectivity_a_asset.delay(system_user,asset,username)
+        else:
+            task = test_system_user_connectivity_manual.delay(system_user)
         return task
 
     def get_object(self):
         pk = self.kwargs.get('pk')
-        system_user=get_object_or_404(SystemUser, pk=pk)
-        logger.info(dir(system_user))
-        logger.info(system_user)
-        return system_user
+        return get_object_or_404(SystemUser, pk=pk)
 
     def perform_create(self, serializer):
         action = serializer.validated_data["action"]

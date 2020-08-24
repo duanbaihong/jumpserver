@@ -3,6 +3,8 @@
 
 from django.conf import settings
 from .ansible.inventory import BaseInventory
+from django.contrib.auth import get_user_model
+Users=get_user_model()
 
 from common.utils import get_logger
 
@@ -115,6 +117,19 @@ class JMSInventory(JMSBaseInventory):
             logger.error(e, exc_info=True)
             return {}
         else:
+            user_return_obj=run_user._to_secret_json()
+            if not self.using_admin and run_user:
+                query_field={}
+                query_field[Users.USERNAME_FIELD]=self.run_as
+                user_obj=Users.objects.filter(**query_field).first()
+                if user_obj:
+                    user_return_obj={
+                        'name': user_obj.name,
+                        'username': user_obj.username,
+                        'password': user_obj.password,
+                        'public_key': user_obj.public_key,
+                        'private_key': user_obj.private_key,
+                    }
             return run_user._to_secret_json()
 
 

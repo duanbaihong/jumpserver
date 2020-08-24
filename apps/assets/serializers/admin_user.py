@@ -63,3 +63,14 @@ class AssetUserTaskSerializer(serializers.Serializer):
     )
     action = serializers.ChoiceField(choices=ACTION_CHOICES, write_only=True)
     task = serializers.CharField(read_only=True)
+
+class AdminUserTaskSerializer(serializers.Serializer):
+    ACTION_CHOICES = (
+        ("test", "test"),
+        ("push", "push"),
+    )
+    action = serializers.ChoiceField(choices=ACTION_CHOICES, write_only=True)
+    asset = serializers.PrimaryKeyRelatedField(
+        queryset=Asset.objects, allow_null=True, required=False, write_only=True
+    )
+    task = serializers.CharField(read_only=True)

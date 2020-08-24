@@ -111,7 +111,7 @@ def on_system_user_users_change(sender, instance=None, action='', model=None, pk
         system_users = queryset
     else:
         system_users = [instance]
-    for s in system_users:
+    for s in system_users: 
         push_system_user_to_assets_manual.delay(s)
 
 

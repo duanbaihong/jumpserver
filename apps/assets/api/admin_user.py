@@ -26,7 +26,7 @@ from common.utils import get_logger
 from ..hands import IsOrgAdmin
 from ..models import AdminUser, Asset
 from .. import serializers
-from ..tasks import test_admin_user_connectivity_manual
+from ..tasks import test_admin_user_connectivity_manual,test_system_user_connectivity_a_asset
 
 
 logger = get_logger(__file__)
@@ -117,3 +117,19 @@ class AdminUserAssetsListView(generics.ListAPIView):
     def get_queryset(self):
         admin_user = self.get_object()
         return admin_user.get_related_assets()
+
+class AdminUserTestTaskCreateApi(generics.RetrieveAPIView):
+    """
+    Test asset admin user assets_connectivity
+    """
+    model = AdminUser
+    permission_classes = (IsOrgAdmin,)
+    serializer_class = serializers.AdminUserTaskSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        admin_user = self.get_object()
+        asset = serializer.validated_data.get('asset')
+        username = self.request.query_params.get('username')
+        task = test_system_user_connectivity_a_asset.delay(admin_user,asset,username)
+        return Response({"task": task.id})
+    

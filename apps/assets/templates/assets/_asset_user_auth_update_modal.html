@@ -7,25 +7,25 @@
     {% csrf_token %}
     <div class="form-group">
         <label class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label">{% trans "Hostname" %}: </label>
-        <div class="col-sm-10">
+        <div class="col-sm-8">
             <p class="form-control-static" id="id_hostname_p"></p>
         </div>
     </div>
     <div class="form-group">
         <label class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label">{% trans "Username" %}: </label>
-        <div class="col-sm-10">
+        <div class="col-sm-8">
             <p class="form-control-static" id="id_username_p"></p>
         </div>
     </div>
     <div class="form-group">
         <label class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label">{% trans "Password" %}: </label>
-        <div class="col-sm-10">
+        <div class="col-sm-8">
             <input class="form-control" id="id_password_auth" type="password" name="password" placeholder="{% trans 'Please input password' %}"/>
         </div>
     </div>
     <div class="form-group">
         <label class="col-bg-3 col-md-3 col-sm-4 col-xs-4 control-label">{% trans "Private key" %}: </label>
-        <div class="col-sm-10">
+        <div class="col-sm-8">
             <div class="row bootstrap3-multi-input">
                 <div class="col-xs-12">
                     <input id="id_private_key" type="file" name="private_key"/>

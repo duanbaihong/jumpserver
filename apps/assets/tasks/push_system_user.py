@@ -9,6 +9,8 @@ from orgs.utils import tmp_to_org, org_aware_func
 from . import const
 from .utils import clean_ansible_task_hosts, group_asset_by_platform
 
+from django.contrib.auth import get_user_model
+Users=get_user_model()
 
 logger = get_logger(__file__)
 __all__ = [
@@ -142,11 +144,23 @@ def get_push_system_user_tasks(system_user, platform="unixlike", username=None):
     tasks = []
     # 仅推送这个username
     if username is not None:
+        query_field={}
+        query_field[Users.USERNAME_FIELD]=username
+        user_obj=Users.objects.filter(**query_field).first()
+        if user_obj:
+            setattr(system_user,'public_key',user_obj.public_key)
+            setattr(system_user,'password',user_obj.password)
         tasks.extend(get_tasks(system_user, username))
-        return tasks
+        return tasks 
     users = system_user.users.all().values_list('username', flat=True)
     print(_("System user is dynamic: {}").format(list(users)))
     for _username in users:
+        query_field={}
+        query_field[Users.USERNAME_FIELD]=_username
+        user_obj=Users.objects.filter(**query_field).first()
+        if user_obj:
+            setattr(system_user,'public_key',user_obj.public_key)
+            setattr(system_user,'password',user_obj.password)
         tasks.extend(get_tasks(system_user, _username))
     return tasks
 
