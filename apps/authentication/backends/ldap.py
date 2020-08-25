@@ -1,6 +1,5 @@
 # coding:utf-8
 #
-
 import ldap
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
@@ -9,8 +8,9 @@ from django_auth_ldap.config import _LDAPConfig, LDAPSearch, LDAPSearchUnion, Po
 from users.models import UserGroup,User
 from users.models.user import RoleMixin
 from common.utils import validate_ssh_public_key
-# get_signer,
+import django.dispatch
 from users.utils import construct_user_email
+populate_user = django.dispatch.Signal(providing_args=["user", "ldap_user"])
 logger = _LDAPConfig.get_logger()
 
 
@@ -105,36 +105,61 @@ class LDAPUser(_LDAPUser):
             setattr(self._user, 'email', email)
 
     def _get_or_create_user(self, force_populate=False):
-        super()._get_or_create_user()
+        """
+        Loads the User model object from the database or creates it if it
+        doesn't exist. Also populates the fields, subject to
+        AUTH_LDAP_ALWAYS_UPDATE_USER.
+        """
+        save_user = False
+
+        username = self.backend.ldap_to_django_username(self._username)
+
+        self._user, built = self.backend.get_or_build_user(username, self)
+        self._user.ldap_user = self
+        self._user.ldap_username = self._username
+
+        should_populate = force_populate or self.settings.ALWAYS_UPDATE_USER or built
+
+        if built:
+            logger.debug("Creating Django user {}".format(username))
+            self._user.set_unusable_password()
+            save_user = True
+
+        if should_populate:
+            logger.debug("Populating Django user {}".format(username))
+            self._populate_user()
+            save_user = True
+
+            # Give the client a chance to finish populating the user just
+            # before saving.
+            populate_user.send(self.backend.__class__, user=self._user, ldap_user=self)
         target_group_names = frozenset(self._get_groups().get_group_names())
-        if len(target_group_names)>0:
+        if save_user:
             if 'Jumpserver-admin' in target_group_names:
                 setattr(self._user,'role',RoleMixin.ROLE_ADMIN)
             else:
                 setattr(self._user,'role',RoleMixin.ROLE_USER)
             setattr(self._user,'source',User.SOURCE_LDAP)
             self._user.save()
-            if not self.settings.MIRROR_GROUPS:
-                new_groups = UserGroup.objects.filter(name__in=target_group_names)
-                if new_groups:
-                    self._user.groups.set(new_groups)
-        else:
-            self._user=None
+
+        # This has to wait until we're sure the user has a pk.
+        if self.settings.MIRROR_GROUPS or self.settings.MIRROR_GROUPS_EXCEPT:
+            self._normalize_mirror_settings()
+            self._mirror_groups(target_group_names)
  
-    def _mirror_groups(self):
+    def _mirror_groups(self,target_group_names=None):
         """
         Mirrors the user's LDAP groups in the Django database and updates the
         user's membership.
         """
         
-        target_group_names = frozenset(self._get_groups().get_group_names())
+        # target_group_names = frozenset(self._get_groups().get_group_names())
         current_group_names = frozenset(
             self._user.groups.values_list("name", flat=True).iterator()
         )
         # These were normalized to sets above.
         MIRROR_GROUPS_EXCEPT = self.settings.MIRROR_GROUPS_EXCEPT
         MIRROR_GROUPS = self.settings.MIRROR_GROUPS
-
         # If the settings are white- or black-listing groups, we'll update
         # target_group_names such that we won't modify the membership of groups
         # beyond our purview.
