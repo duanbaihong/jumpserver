@@ -77,13 +77,13 @@ $(document).ready(function () {
     initAssetUserTable({assetUserListUrl: assetUserListUrl});
 })
 .on("click", '.btn-test-auth', function () {
-    authUid = $(this).data('uid');
-    var theUrl = "{% url 'api-assets:admin-user-tasks-create'%}?id={{ DEFAULT_PK }}"
-        .replace("{{ DEFAULT_PK }}", authUid);
+    var authUid = $(this).data('uid');
     var $this = $(this);
     var assetId = $this.data('asset');
     var username = $this.data("username");
-    // var theUrl = "{% url 'api-assets:system-user-task-create' pk=object.id %}?username=" + username;
+    // var theUrl = "{% url 'api-assets:admin-user-tasks-create' pk=admin_user.id%}?username=" + username;
+    var theUrl = "{% url 'api-assets:asset-user-task-create'%}?id={{ DEFAULT_PK }}"
+        .replace("{{ DEFAULT_PK }}", authUid);
     var data = {
         action: 'test',
         asset: assetId,

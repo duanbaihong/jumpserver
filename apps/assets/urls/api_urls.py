@@ -42,7 +42,6 @@ urlpatterns = [
     path('admin-users/<uuid:pk>/nodes/', api.ReplaceNodesAdminUserApi.as_view(), name='replace-nodes-admin-user'),
     path('admin-users/<uuid:pk>/auth/', api.AdminUserAuthApi.as_view(), name='admin-user-auth'),
     path('admin-users/<uuid:pk>/connective/', api.AdminUserTestConnectiveApi.as_view(), name='admin-user-connective'),
-    path('admin-users/<uuid:pk>/tasks/', api.AdminUserTestTaskCreateApi.as_view(), name='admin-user-tasks-create'),
     path('admin-users/<uuid:pk>/assets/', api.AdminUserAssetsListView.as_view(), name='admin-user-assets'),
 
     path('system-users/<uuid:pk>/auth-info/', api.SystemUserAuthInfoApi.as_view(), name='system-user-auth-info'),

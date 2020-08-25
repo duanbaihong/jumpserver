@@ -4,8 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
 from common.serializers import AdaptedBulkListSerializer
-
-from ..models import Node, AdminUser
+from ..models import Node, AdminUser, Asset
 from orgs.mixins.serializers import BulkOrgResourceModelSerializer
 
 from .base import AuthSerializer, AuthSerializerMixin
