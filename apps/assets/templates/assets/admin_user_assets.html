@@ -80,8 +80,6 @@ $(document).ready(function () {
     var authUid = $(this).data('uid');
     var $this = $(this);
     var assetId = $this.data('asset');
-    var username = $this.data("username");
-    // var theUrl = "{% url 'api-assets:admin-user-tasks-create' pk=admin_user.id%}?username=" + username;
     var theUrl = "{% url 'api-assets:asset-user-task-create'%}?id={{ DEFAULT_PK }}"
         .replace("{{ DEFAULT_PK }}", authUid);
     var data = {

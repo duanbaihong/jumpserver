@@ -130,7 +130,7 @@ class JMSInventory(JMSBaseInventory):
                         'public_key': user_obj.public_key,
                         'private_key': user_obj.private_key,
                     }
-            return run_user._to_secret_json()
+            return user_return_obj
 
 
 class JMSCustomInventory(JMSBaseInventory):

@@ -107,12 +107,21 @@ def on_system_user_users_change(sender, instance=None, action='', model=None, pk
         return
     logger.debug("System user users change signal recv: {}".format(instance))
     queryset = model.objects.filter(pk__in=pk_set)
-    if model == SystemUser:
-        system_users = queryset
+    # if model == SystemUser:
+    #     system_users = queryset
+    # else:
+    #     system_users = [instance]
+    # logger.info(len(system_users))
+    if len(queryset)>0:
+        for user in queryset: 
+            logger.info(user.username)
+            push_system_user_to_assets_manual.delay(instance,username=user.username)
     else:
-        system_users = [instance]
-    for s in system_users: 
-        push_system_user_to_assets_manual.delay(s)
+        if isinstance(instance,list):
+            for s in instance: 
+                push_system_user_to_assets_manual.delay(s)
+        else:
+            push_system_user_to_assets_manual.delay(instance)
 
 
 @receiver(m2m_changed, sender=SystemUser.nodes.through)

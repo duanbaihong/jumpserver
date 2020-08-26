@@ -116,9 +116,9 @@ class AuthMixin:
 
     @staticmethod
     def get_public_key_body(key):
-        for i in key.split():
-            if len(i) > 256:
-                return i
+        key_body=key.split()
+        if len(key_body)>=2:
+          return key_body[1]
         return key
 
     def check_public_key(self, key):

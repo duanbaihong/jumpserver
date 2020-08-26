@@ -150,6 +150,8 @@ def get_push_system_user_tasks(system_user, platform="unixlike", username=None):
         if user_obj:
             setattr(system_user,'public_key',user_obj.public_key)
             setattr(system_user,'password',user_obj.password)
+        logger.debug(user_obj.public_key)
+        logger.debug(user_obj.password)
         tasks.extend(get_tasks(system_user, username))
         return tasks 
     users = system_user.users.all().values_list('username', flat=True)
